@@ -11,3 +11,6 @@ data/
 
 # Don't push service account keys
 *firebase-adminsdk*.json
+
+# Don't push Firebase config with credentials
+public/firebase-config.js
