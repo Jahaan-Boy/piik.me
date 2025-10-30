@@ -4,6 +4,7 @@ const socket = io();
 // State
 let currentShortCode = null;
 let referrerChart = null; // Store chart instance
+let currentAnalyticsFilter = 'all';
 
 // DOM Elements
 const urlInput = document.getElementById('urlInput');
@@ -12,6 +13,8 @@ const utmMedium = document.getElementById('utmMedium');
 const utmCampaign = document.getElementById('utmCampaign');
 const utmTerm = document.getElementById('utmTerm');
 const utmContent = document.getElementById('utmContent');
+const qrValidity = document.getElementById('qrValidity');
+const analyticsFilter = document.getElementById('analyticsFilter');
 const shortenBtn = document.getElementById('shortenBtn');
 const resultSection = document.getElementById('resultSection');
 const shortUrlDisplay = document.getElementById('shortUrlDisplay');
@@ -35,6 +38,7 @@ if (shareBtn) shareBtn.addEventListener('click', shareLink);
 if (backBtn) backBtn.addEventListener('click', goBack);
 if (createNewBtn) createNewBtn.addEventListener('click', showCreateForm);
 if (createFirstBtn) createFirstBtn.addEventListener('click', showCreateForm);
+if (analyticsFilter) analyticsFilter.addEventListener('change', handleAnalyticsFilter);
 
 // Allow Enter key to submit
 if (urlInput) {
@@ -320,16 +324,13 @@ async function createShortLink() {
 // Copy to Clipboard
 function copyToClipboard() {
     shortUrlDisplay.select();
-    document.execCommand('copy');
-    
-    const originalText = copyBtn.textContent;
-    copyBtn.textContent = '✅ Copied!';
-    copyBtn.classList.add('success-animation');
-    
-    setTimeout(() => {
-        copyBtn.textContent = originalText;
-        copyBtn.classList.remove('success-animation');
-    }, 2000);
+    navigator.clipboard.writeText(shortUrlDisplay.value).then(() => {
+        copyBtn.classList.add('success-animation');
+        showToast('Link copied to clipboard! 🔗');
+    }).catch(err => {
+        showToast('Failed to copy link', '❌');
+        console.error('Failed to copy:', err);
+    });
 }
 
 // Show Analytics

@@ -288,6 +288,72 @@ header h1 {
     border-color: var(--primary);
 }
 
+.link-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.utm-params, .qr-options {
+    background: var(--surface);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.utm-grid, .qr-grid {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.qr-validity {
+    display: grid;
+    gap: 8px;
+}
+
+.qr-validity label {
+    font-size: 0.9rem;
+    color: var(--foreground-dim);
+}
+
+.qr-validity input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--foreground);
+}
+
+.analytics-controls {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-top: 16px;
+}
+
+.analytics-filter {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.analytics-filter label {
+    color: var(--foreground-dim);
+    font-size: 0.9rem;
+}
+
+.analytics-filter select {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--foreground);
+    font-size: 0.9rem;
+}
+
 .link-card-header {
     display: flex;
     justify-content: space-between;
@@ -1383,6 +1449,27 @@ header h1 {
 .action-buttons {
     display: flex;
     gap: 12px;
+}
+
+.qr-code-section {
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.qr-preview {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.qr-preview img {
+    max-width: 200px;
+    border-radius: 8px;
+    padding: 12px;
+    background: white;
 }
 
 /* Analytics Section */
