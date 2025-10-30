@@ -308,7 +308,7 @@ async function createShortLink() {
             currentShortCode = data.shortCode;
             shortUrlDisplay.value = data.shortUrl;
             resultSection.style.display = 'block';
-            qrCodeSection.style.display = 'none'; // Hide QR code section for new link
+            if (qrCodeSection) qrCodeSection.style.display = 'none'; // Hide QR code section for new link
             resultSection.classList.add('success-animation');
             
             // Clear animation class after animation completes
