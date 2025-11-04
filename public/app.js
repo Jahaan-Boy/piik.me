@@ -1,277 +1,384 @@
+// ================================
+// MODERN ZAPLINK UI - APP LOGIC
+// ================================
+
 // Initialize Socket.IO
 const socket = io();
 
 // State
-let currentShortCode = null;
-let referrerChart = null; // Store chart instance
+let currentPage = 'home';
+let currentTheme = 'dark';
+let userLinks = [];
+let currentUser = null;
 
 // DOM Elements
-const urlInput = document.getElementById('urlInput');
+const sidebar = document.getElementById('sidebar');
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const navItems = document.querySelectorAll('.nav-item');
+const pages = document.querySelectorAll('.page');
+const pageTitle = document.getElementById('pageTitle');
+
+// Theme Elements
+const themeBtns = document.querySelectorAll('.theme-btn');
+const html = document.documentElement;
+
+// User Elements
+const sidebarUser = document.getElementById('sidebarUser');
+const sidebarUserPhoto = document.getElementById('sidebarUserPhoto');
+const sidebarUserName = document.getElementById('sidebarUserName');
+const sidebarUserEmail = document.getElementById('sidebarUserEmail');
+const topbarUserPhoto = document.getElementById('topbarUserPhoto');
+const userMenuBtn = document.getElementById('userMenuBtn');
+const userDropdown = document.getElementById('userDropdown');
+const logoutBtn = document.getElementById('logoutBtn');
+
+// Modal Elements
+const createLinkModal = document.getElementById('createLinkModal');
+const modalOverlay = document.getElementById('modalOverlay');
+const modalClose = document.getElementById('modalClose');
+const modalCancel = document.getElementById('modalCancel');
+const createLinkBtn = document.getElementById('createLinkBtn');
+const createFirstBtn = document.getElementById('createFirstBtn');
+const createLinkSubmit = document.getElementById('createLinkSubmit');
+const loginModal = document.getElementById('loginModal');
+const googleLoginBtn = document.getElementById('googleLoginBtn');
+
+// Home Page Elements
+const linksContainer = document.getElementById('linksContainer');
+const emptyState = document.getElementById('emptyState');
+const filterTabs = document.querySelectorAll('.filter-tab');
+const sortSelect = document.getElementById('sortSelect');
+const searchInput = document.getElementById('searchInput');
+
+// Stats Elements
+const totalLinksEl = document.getElementById('totalLinks');
+const totalClicksEl = document.getElementById('totalClicks');
+const activeLinksEl = document.getElementById('activeLinks');
+const avgClickRateEl = document.getElementById('avgClickRate');
+
+// Form Elements
+const destinationUrl = document.getElementById('destinationUrl');
 const utmSource = document.getElementById('utmSource');
 const utmMedium = document.getElementById('utmMedium');
 const utmCampaign = document.getElementById('utmCampaign');
 const utmTerm = document.getElementById('utmTerm');
 const utmContent = document.getElementById('utmContent');
-const shortenBtn = document.getElementById('shortenBtn');
-const resultSection = document.getElementById('resultSection');
-const shortUrlDisplay = document.getElementById('shortUrlDisplay');
-const copyBtn = document.getElementById('copyBtn');
-const viewAnalyticsBtn = document.getElementById('viewAnalyticsBtn');
-const shareBtn = document.getElementById('shareBtn');
-const analyticsSection = document.getElementById('analyticsSection');
-const backBtn = document.getElementById('backBtn');
 
-// Dashboard Elements
-const createNewBtn = document.getElementById('createNewBtn');
-const createFirstBtn = document.getElementById('createFirstBtn');
-const linksGrid = document.getElementById('linksGrid');
-const emptyState = document.getElementById('emptyState');
-const qrCodeBtn = document.getElementById('qrCodeBtn');
-const qrCodeSection = document.getElementById('qrCodeSection');
-const qrCodeDisplay = document.getElementById('qrCodeDisplay');
-const downloadQrBtn = document.getElementById('downloadQrBtn');
+// ================================
+// INITIALIZATION
+// ================================
 
-// Event Listeners
-if (shortenBtn) shortenBtn.addEventListener('click', createShortLink);
-if (copyBtn) copyBtn.addEventListener('click', copyToClipboard);
-if (viewAnalyticsBtn) viewAnalyticsBtn.addEventListener('click', showAnalytics);
-if (shareBtn) shareBtn.addEventListener('click', shareLink);
-if (qrCodeBtn) qrCodeBtn.addEventListener('click', showQRCode);
-if (downloadQrBtn) downloadQrBtn.addEventListener('click', downloadQRCode);
-if (backBtn) backBtn.addEventListener('click', goBack);
-if (createNewBtn) createNewBtn.addEventListener('click', showCreateForm);
-if (createFirstBtn) createFirstBtn.addEventListener('click', showCreateForm);
+document.addEventListener('DOMContentLoaded', () => {
+    initializeTheme();
+    initializeAuth();
+    initializeNavigation();
+    initializeEventListeners();
+});
 
-// Allow Enter key to submit
-if (urlInput) {
-    urlInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') createShortLink();
-    });
-}
+// ================================
+// THEME SYSTEM
+// ================================
 
-// Show Dashboard
-async function showDashboard() {
-    if (!isAuthenticated()) return;
+function initializeTheme() {
+    // Check saved theme or use system preference
+    const savedTheme = localStorage.getItem('zaplink-theme');
     
-    dashboardSection.style.display = 'block';
-    shortenerSection.style.display = 'none';
-    analyticsSection.style.display = 'none';
-    
-    await loadUserLinks();
-}
-
-// Show Create Form
-function showCreateForm() {
-    dashboardSection.style.display = 'none';
-    shortenerSection.style.display = 'block';
-    analyticsSection.style.display = 'none';
-}
-
-// Load User's Links
-async function loadUserLinks() {
-    try {
-        const token = await getAuthToken();
-        
-        if (!token) {
-            console.log('No auth token available');
-            emptyState.style.display = 'block';
-            linksGrid.style.display = 'none';
-            return;
-        }
-        
-        console.log('Fetching user links...');
-        const response = await fetch('/api/user/links', {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            console.error('Error response:', error);
-            throw new Error(error.error || 'Failed to fetch links');
-        }
-        
-        const data = await response.json();
-        console.log('Fetched links:', data.links?.length || 0);
-        
-        if (data.links && data.links.length > 0) {
-            displayLinks(data.links);
-            emptyState.style.display = 'none';
-            linksGrid.style.display = 'grid';
-        } else {
-            console.log('No links found, showing empty state');
-            emptyState.style.display = 'block';
-            linksGrid.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Error loading links:', error);
-        // Show empty state on error
-        emptyState.style.display = 'block';
-        linksGrid.style.display = 'none';
+    if (savedTheme) {
+        setTheme(savedTheme);
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        setTheme('light');
+    } else {
+        setTheme('dark');
     }
 }
 
-// Display Links Grid
-function displayLinks(links) {
-    linksGrid.innerHTML = links.map(link => {
-        const ctr = link.analytics.impressions > 0 
-            ? ((link.analytics.clicks / link.analytics.impressions) * 100).toFixed(1) 
-            : 0;
-        
-        return `
-            <div class="link-card" data-shortcode="${link.shortCode}">
-                <div class="link-card-header">
-                    <h3 class="link-title">${truncateUrl(link.originalUrl, 40)}</h3>
-                    <button class="link-copy-btn" onclick="copyLinkUrl('${link.shortUrl}')">📋</button>
-                </div>
-                <div class="link-short-url">
-                    <a href="${link.shortUrl}" target="_blank">${link.shortUrl}</a>
-                </div>
-                <div class="link-stats">
-                    <div class="link-stat">
-                        <span class="stat-label">👁️ Impressions</span>
-                        <span class="stat-value">${link.analytics.impressions || 0}</span>
-                    </div>
-                    <div class="link-stat">
-                        <span class="stat-label">🖱️ Clicks</span>
-                        <span class="stat-value">${link.analytics.clicks || 0}</span>
-                    </div>
-                    <div class="link-stat">
-                        <span class="stat-label">📤 Shares</span>
-                        <span class="stat-value">${link.analytics.shares || 0}</span>
-                    </div>
-                    <div class="link-stat">
-                        <span class="stat-label">📈 CTR</span>
-                        <span class="stat-value">${ctr}%</span>
-                    </div>
-                </div>
-                <div class="link-actions">
-                    <button class="link-action-btn" onclick="viewLinkAnalytics('${link.shortCode}')">
-                        📊 View Analytics
-                    </button>
-                    <button class="link-action-btn" onclick="showLinkQRCode('${link.shortUrl}', '${link.shortCode}')">
-                        📱 QR Code
-                    </button>
-                    <button class="link-action-btn" onclick="shareLink('${link.shortUrl}', '${link.shortCode}')">
-                        🔗 Share
-                    </button>
-                    <button class="link-action-btn delete-btn" onclick="deleteLink('${link.shortCode}')">
-                        🗑️ Delete
-                    </button>
-                </div>
-                <div class="link-date">
-                    Created ${formatDate(link.createdAt)}
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
-// Helper Functions
-function truncateUrl(url, maxLength) {
-    return url.length > maxLength ? url.substring(0, maxLength) + '...' : url;
-}
-
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+function setTheme(theme) {
+    currentTheme = theme;
     
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    return date.toLocaleDateString();
+    if (theme === 'system') {
+        const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        html.setAttribute('data-theme', systemTheme);
+    } else {
+        html.setAttribute('data-theme', theme);
+    }
+    
+    // Update active button
+    themeBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+    });
+    
+    localStorage.setItem('zaplink-theme', theme);
 }
 
-function copyLinkUrl(url) {
-    navigator.clipboard.writeText(url).then(() => {
-        // Show temporary success message
-        const btn = event.target;
-        const originalText = btn.textContent;
-        btn.textContent = '✅';
-        setTimeout(() => {
-            btn.textContent = originalText;
-        }, 2000);
+// ================================
+// NAVIGATION
+// ================================
+
+function initializeNavigation() {
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = item.dataset.page;
+            navigateToPage(page);
+        });
     });
 }
 
-function viewLinkAnalytics(shortCode) {
-    currentShortCode = shortCode;
-    showAnalytics();
-}
-
-// Delete Link
-async function deleteLink(shortCode) {
-    if (!confirm('Are you sure you want to delete this link? This action cannot be undone.')) {
-        return;
+function navigateToPage(page) {
+    currentPage = page;
+    
+    // Update nav items
+    navItems.forEach(item => {
+        item.classList.toggle('active', item.dataset.page === page);
+    });
+    
+    // Update pages
+    pages.forEach(p => {
+        p.style.display = p.id === `${page}Page` ? 'block' : 'none';
+    });
+    
+    // Update title
+    const titles = {
+        home: 'Home',
+        analytics: 'Analytics',
+        profile: 'Profile'
+    };
+    pageTitle.textContent = titles[page] || page;
+    
+    // Load page data
+    if (page === 'home') {
+        loadLinks();
+    } else if (page === 'analytics') {
+        loadAnalytics();
+    } else if (page === 'profile') {
+        loadProfile();
     }
     
-    try {
-        const token = await getAuthToken();
-        const response = await fetch(`/api/links/${shortCode}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+    // Close sidebar on mobile
+    if (window.innerWidth <= 1024) {
+        sidebar.classList.remove('show');
+    }
+}
+
+// ================================
+// EVENT LISTENERS
+// ================================
+
+function initializeEventListeners() {
+    // Theme switcher
+    themeBtns.forEach(btn => {
+        btn.addEventListener('click', () => setTheme(btn.dataset.theme));
+    });
+    
+    // Mobile menu toggle
+    if (mobileMenuBtn) {
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('show');
         });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to delete link');
+    }
+    
+    // User dropdown
+    if (userMenuBtn) {
+        userMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            userDropdown.classList.toggle('show');
+        });
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', () => {
+        userDropdown.classList.remove('show');
+    });
+    
+    // Create link modal
+    if (createLinkBtn) {
+        createLinkBtn.addEventListener('click', openCreateLinkModal);
+    }
+    
+    if (createFirstBtn) {
+        createFirstBtn.addEventListener('click', openCreateLinkModal);
+    }
+    
+    if (modalClose) {
+        modalClose.addEventListener('click', closeCreateLinkModal);
+    }
+    
+    if (modalCancel) {
+        modalCancel.addEventListener('click', closeCreateLinkModal);
+    }
+    
+    if (modalOverlay) {
+        modalOverlay.addEventListener('click', closeCreateLinkModal);
+    }
+    
+    if (createLinkSubmit) {
+        createLinkSubmit.addEventListener('click', handleCreateLink);
+    }
+    
+    // Logout
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+    
+    // Search
+    if (searchInput) {
+        searchInput.addEventListener('input', handleSearch);
+    }
+    
+    // Filter tabs
+    filterTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            filterTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            filterLinks(tab.dataset.filter);
+        });
+    });
+    
+    // Sort
+    if (sortSelect) {
+        sortSelect.addEventListener('change', () => {
+            sortLinks(sortSelect.value);
+        });
+    }
+}
+
+// ================================
+// AUTHENTICATION
+// ================================
+
+async function initializeAuth() {
+    // Check if user is authenticated
+    const token = await getAuthToken();
+    
+    if (token) {
+        try {
+            const user = await getCurrentUser();
+            if (user) {
+                currentUser = user;
+                showAuthenticatedUI();
+                loadLinks();
+            } else {
+                showLoginModal();
+            }
+        } catch (error) {
+            console.error('Auth error:', error);
+            showLoginModal();
         }
-        
-        // Remove the link card from UI with animation
-        const linkCard = document.querySelector(`[data-shortcode="${shortCode}"]`);
-        if (linkCard) {
-            linkCard.style.opacity = '0';
-            linkCard.style.transform = 'scale(0.9)';
-            setTimeout(() => {
-                linkCard.remove();
-                // Check if there are any links left
-                const remainingLinks = document.querySelectorAll('.link-card');
-                if (remainingLinks.length === 0) {
-                    emptyState.style.display = 'block';
-                    linksGrid.style.display = 'none';
+    } else {
+        showLoginModal();
+    }
+}
+
+async function getAuthToken() {
+    return new Promise((resolve) => {
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (user) {
+                    const token = await user.getIdToken();
+                    resolve(token);
+                } else {
+                    resolve(null);
                 }
-            }, 300);
+            });
+        } else {
+            resolve(null);
         }
+    });
+}
+
+async function getCurrentUser() {
+    return new Promise((resolve) => {
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            firebase.auth().onAuthStateChanged((user) => {
+                resolve(user);
+            });
+        } else {
+            resolve(null);
+        }
+    });
+}
+
+function showAuthenticatedUI() {
+    if (currentUser) {
+        // Update sidebar user info
+        sidebarUserPhoto.src = currentUser.photoURL || 'https://via.placeholder.com/40';
+        sidebarUserName.textContent = currentUser.displayName || 'User';
+        sidebarUserEmail.textContent = currentUser.email || '';
+        sidebarUser.style.display = 'flex';
         
-        // Show success message
-        alert('Link deleted successfully!');
-    } catch (error) {
-        console.error('Error deleting link:', error);
-        alert('Failed to delete link: ' + error.message);
+        // Update topbar user info
+        topbarUserPhoto.src = currentUser.photoURL || 'https://via.placeholder.com/40';
+        
+        // Hide login modal
+        loginModal.style.display = 'none';
     }
 }
 
-// Create Short Link
-async function createShortLink() {
-    if (!isAuthenticated()) {
-        alert('Please sign in to create links');
-        return;
-    }
+function showLoginModal() {
+    loginModal.style.display = 'flex';
+}
+
+async function handleLogout(e) {
+    e.preventDefault();
     
-    const url = urlInput.value.trim();
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+        try {
+            await firebase.auth().signOut();
+            currentUser = null;
+            userLinks = [];
+            showLoginModal();
+            showToast('Logged out successfully', 'success');
+        } catch (error) {
+            console.error('Logout error:', error);
+            showToast('Failed to logout', 'error');
+        }
+    }
+}
+
+// ================================
+// MODAL FUNCTIONS
+// ================================
+
+function openCreateLinkModal() {
+    createLinkModal.classList.add('show');
+    destinationUrl.focus();
+}
+
+function closeCreateLinkModal() {
+    createLinkModal.classList.remove('show');
+    clearCreateLinkForm();
+}
+
+function clearCreateLinkForm() {
+    destinationUrl.value = '';
+    utmSource.value = '';
+    utmMedium.value = '';
+    utmCampaign.value = '';
+    utmTerm.value = '';
+    utmContent.value = '';
+}
+
+// ================================
+// LINK MANAGEMENT
+// ================================
+
+async function handleCreateLink() {
+    const url = destinationUrl.value.trim();
     
     if (!url) {
-        alert('Please enter a URL');
+        showToast('Please enter a URL', 'error');
         return;
     }
-
+    
     // Validate URL
     try {
         new URL(url);
     } catch (e) {
-        alert('Please enter a valid URL');
+        showToast('Please enter a valid URL', 'error');
         return;
     }
-
-    // Get UTM parameters if provided
+    
+    // Get UTM parameters
     const utmParams = {
         source: utmSource.value.trim(),
         medium: utmMedium.value.trim(),
@@ -279,15 +386,15 @@ async function createShortLink() {
         term: utmTerm.value.trim(),
         content: utmContent.value.trim()
     };
-
-    // Remove empty UTM parameters
+    
+    // Remove empty params
     Object.keys(utmParams).forEach(key => {
         if (!utmParams[key]) delete utmParams[key];
     });
-
-    shortenBtn.disabled = true;
-    shortenBtn.textContent = 'Generating...';
-
+    
+    createLinkSubmit.disabled = true;
+    createLinkSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+    
     try {
         const token = await getAuthToken();
         const response = await fetch('/api/shorten', {
@@ -301,540 +408,194 @@ async function createShortLink() {
                 utmParams: Object.keys(utmParams).length > 0 ? utmParams : null
             })
         });
-
+        
         const data = await response.json();
-
+        
         if (data.success) {
-            currentShortCode = data.shortCode;
-            shortUrlDisplay.value = data.shortUrl;
-            resultSection.style.display = 'block';
-            if (qrCodeSection) qrCodeSection.style.display = 'none'; // Hide QR code section for new link
-            resultSection.classList.add('success-animation');
-            
-            // Clear animation class after animation completes
-            setTimeout(() => {
-                resultSection.classList.remove('success-animation');
-            }, 500);
+            showToast('Link created successfully!', 'success');
+            closeCreateLinkModal();
+            loadLinks();
         } else {
-            alert('Error: ' + (data.error || 'Failed to create short link'));
+            showToast(data.error || 'Failed to create link', 'error');
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Failed to create short link. Please try again.');
+        showToast('Failed to create link. Please try again.', 'error');
     } finally {
-        shortenBtn.disabled = false;
-        shortenBtn.textContent = 'Generate Zaplink';
+        createLinkSubmit.disabled = false;
+        createLinkSubmit.innerHTML = '<i class="fas fa-plus"></i> Create Link';
     }
 }
 
-// Copy to Clipboard
-function copyToClipboard() {
-    shortUrlDisplay.select();
-    document.execCommand('copy');
-    
-    const originalText = copyBtn.textContent;
-    copyBtn.textContent = '✅ Copied!';
-    copyBtn.classList.add('success-animation');
-    
-    setTimeout(() => {
-        copyBtn.textContent = originalText;
-        copyBtn.classList.remove('success-animation');
-    }, 2000);
-}
-
-// Show Analytics
-async function showAnalytics() {
-    if (!currentShortCode) return;
-
-    document.querySelector('.shortener-section').style.display = 'none';
-    analyticsSection.style.display = 'block';
-
-    // Subscribe to real-time updates
-    socket.emit('subscribe', currentShortCode);
-
-    // Listen for real-time updates
-    socket.on(`analytics:${currentShortCode}`, (data) => {
-        updateAnalyticsDisplay(data.data);
-    });
-
-    // Load initial analytics
-    await loadAnalytics(currentShortCode);
-
-    // Track impression
-    trackImpression(currentShortCode);
-}
-
-// Load Analytics
-async function loadAnalytics(shortCode) {
+async function loadLinks() {
     try {
-        const response = await fetch(`/api/analytics/${shortCode}`);
+        const token = await getAuthToken();
+        
+        if (!token) {
+            emptyState.style.display = 'block';
+            linksContainer.style.display = 'none';
+            return;
+        }
+        
+        const response = await fetch('/api/user/links', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch links');
+        }
+        
         const data = await response.json();
-
-        if (data.link && data.analytics) {
-            displayLinkInfo(data.link);
-            updateAnalyticsDisplay(data.analytics);
+        userLinks = data.links || [];
+        
+        if (userLinks.length > 0) {
+            displayLinks(userLinks);
+            updateStats(userLinks);
+            emptyState.style.display = 'none';
+            linksContainer.style.display = 'grid';
+        } else {
+            emptyState.style.display = 'block';
+            linksContainer.style.display = 'none';
         }
     } catch (error) {
-        console.error('Error loading analytics:', error);
+        console.error('Error loading links:', error);
+        showToast('Failed to load links', 'error');
     }
 }
 
-// Display Link Info
-function displayLinkInfo(link) {
-    const linkInfo = document.getElementById('linkInfo');
-    linkInfo.innerHTML = `
-        <div style="margin-bottom: 10px;">
-            <strong>Short URL:</strong> <a href="${link.shortUrl}" target="_blank">${link.shortUrl}</a>
-        </div>
-        <div style="margin-bottom: 10px;">
-            <strong>Original URL:</strong> ${link.originalUrl}
-        </div>
-        <div>
-            <strong>Created:</strong> ${new Date(link.createdAt).toLocaleString()}
-        </div>
-        ${Object.keys(link.utmParams || {}).length > 0 ? `
-            <div style="margin-top: 10px;">
-                <strong>UTM Parameters:</strong>
-                <div style="margin-top: 5px; padding: 10px; background: white; border-radius: 8px;">
-                    ${Object.entries(link.utmParams).map(([key, value]) => 
-                        value ? `<div><code>${key}: ${value}</code></div>` : ''
-                    ).join('')}
+function displayLinks(links) {
+    linksContainer.innerHTML = links.map(link => `
+        <div class="link-card" data-link-id="${link.shortCode}">
+            <div class="link-icon">
+                <i class="fas fa-link"></i>
+            </div>
+            <div class="link-content">
+                <div class="link-url">
+                    <a href="${link.shortUrl}" class="link-short" target="_blank">${link.shortUrl}</a>
+                    <button class="btn-icon" onclick="copyLink('${link.shortUrl}')" title="Copy">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="link-destination">${link.originalUrl}</div>
+                <div class="link-meta">
+                    <span><i class="fas fa-calendar"></i> ${formatDate(link.createdAt)}</span>
+                    ${link.utmParams ? '<span><i class="fas fa-tags"></i> UTM Enabled</span>' : ''}
                 </div>
             </div>
-        ` : ''}
-    `;
-}
-
-// Update Analytics Display
-function updateAnalyticsDisplay(analytics) {
-    // Update main stats
-    document.getElementById('impressions').textContent = analytics.impressions || 0;
-    document.getElementById('clicks').textContent = analytics.clicks || 0;
-    document.getElementById('shares').textContent = analytics.shares || 0;
-    
-    // Calculate CTR
-    const ctr = analytics.impressions > 0 
-        ? ((analytics.clicks / analytics.impressions) * 100).toFixed(2) 
-        : 0;
-    document.getElementById('ctr').textContent = `${ctr}%`;
-
-    // Update metric cards
-    updateMetricCards(analytics);
-    
-    // Update devices chart
-    updateChart('devicesChart', analytics.devices || {});
-    
-    // Update browsers chart
-    updateChart('browsersChart', analytics.browsers || {});
-    
-    // Update referrers donut chart
-    updateReferrerChart(analytics.referrers || {});
-    
-    // Update click history
-    updateClickHistory(analytics.clickHistory || []);
-}
-
-// Update Metric Cards
-function updateMetricCards(analytics) {
-    // Page Views by Device
-    const devices = analytics.devices || {};
-    document.getElementById('desktopViews').textContent = devices.Desktop || 0;
-    document.getElementById('mobileViews').textContent = devices.Mobile || 0;
-    
-    // Top Browsers
-    const browsers = analytics.browsers || {};
-    const sortedBrowsers = Object.entries(browsers).sort((a, b) => b[1] - a[1]);
-    
-    if (sortedBrowsers.length >= 1) {
-        document.getElementById('topBrowser1Name').textContent = sortedBrowsers[0][0];
-        document.getElementById('topBrowser1Value').textContent = sortedBrowsers[0][1].toLocaleString();
-    }
-    
-    if (sortedBrowsers.length >= 2) {
-        document.getElementById('topBrowser2Name').textContent = sortedBrowsers[1][0];
-        document.getElementById('topBrowser2Value').textContent = sortedBrowsers[1][1].toLocaleString();
-    }
-    
-    // Engagement (most active referrer)
-    const referrers = analytics.referrers || {};
-    const sortedReferrers = Object.entries(referrers).sort((a, b) => b[1] - a[1]);
-    
-    if (sortedReferrers.length > 0) {
-        document.getElementById('engagementIndicator').textContent = sortedReferrers[0][0];
-        document.getElementById('engagementValue').textContent = sortedReferrers[0][1].toLocaleString();
-    } else {
-        document.getElementById('engagementIndicator').textContent = 'No data';
-        document.getElementById('engagementValue').textContent = '0';
-    }
-}
-
-// Update Chart
-function updateChart(containerId, data) {
-    const container = document.getElementById(containerId);
-    
-    if (Object.keys(data).length === 0) {
-        container.innerHTML = '<p style="color: #64748b; text-align: center;">No data yet</p>';
-        return;
-    }
-
-    const total = Object.values(data).reduce((sum, val) => sum + val, 0);
-    
-    container.innerHTML = Object.entries(data)
-        .sort((a, b) => b[1] - a[1])
-        .map(([key, value]) => {
-            const percentage = ((value / total) * 100).toFixed(1);
-            return `
-                <div class="chart-item">
-                    <div>
-                        <div class="chart-item-label">${key}</div>
-                        <div class="chart-bar" style="width: ${percentage}%; max-width: 200px;"></div>
-                    </div>
-                    <div class="chart-item-value">${value} (${percentage}%)</div>
+            <div class="link-stats">
+                <div class="link-stat">
+                    <span class="link-stat-value">${link.clicks || 0}</span>
+                    <span class="link-stat-label">Clicks</span>
                 </div>
-            `;
-        })
-        .join('');
-}
-
-// Update Click History
-function updateClickHistory(history) {
-    const container = document.getElementById('clickHistory');
-    
-    if (history.length === 0) {
-        container.innerHTML = '<p style="color: #64748b; text-align: center;">No clicks yet</p>';
-        return;
-    }
-
-    // Show most recent 10 clicks
-    const recentClicks = history.slice(-10).reverse();
-    
-    container.innerHTML = recentClicks.map(click => `
-        <div class="click-item">
-            <div class="click-time">${new Date(click.timestamp).toLocaleString()}</div>
-            <div class="click-details">
-                <div class="click-detail">
-                    <span>🖥️</span>
-                    <span>${click.device}</span>
-                </div>
-                <div class="click-detail">
-                    <span>🌐</span>
-                    <span>${click.browser}</span>
-                </div>
-                <div class="click-detail">
-                    <span>🔗</span>
-                    <span>${click.referrer}</span>
-                </div>
+            </div>
+            <div class="link-actions">
+                <button class="link-action-btn" onclick="viewAnalytics('${link.shortCode}')" title="Analytics">
+                    <i class="fas fa-chart-line"></i>
+                </button>
+                <button class="link-action-btn" onclick="showQRCode('${link.shortUrl}', '${link.shortCode}')" title="QR Code">
+                    <i class="fas fa-qrcode"></i>
+                </button>
+                <button class="link-action-btn" onclick="shareLink('${link.shortUrl}')" title="Share">
+                    <i class="fas fa-share-alt"></i>
+                </button>
+                <button class="link-action-btn delete" onclick="deleteLink('${link.shortCode}')" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
         </div>
     `).join('');
 }
 
-// Update Referrer Donut Chart
-function updateReferrerChart(referrers) {
-    const canvas = document.getElementById('referrerDonutChart');
-    const legendContainer = document.getElementById('referrerLegend');
+function updateStats(links) {
+    const totalClicks = links.reduce((sum, link) => sum + (link.clicks || 0), 0);
+    const activeCount = links.filter(link => link.clicks > 0).length;
+    const avgRate = links.length > 0 ? (totalClicks / links.length).toFixed(1) : 0;
     
-    if (Object.keys(referrers).length === 0) {
-        canvas.parentElement.innerHTML = '<p style="color: #64748b; text-align: center; padding: 40px;">No referrer data yet</p>';
-        return;
+    totalLinksEl.textContent = links.length;
+    totalClicksEl.textContent = totalClicks.toLocaleString();
+    activeLinksEl.textContent = activeCount;
+    avgClickRateEl.textContent = avgRate;
+}
+
+function filterLinks(filter) {
+    let filtered = [...userLinks];
+    
+    if (filter === 'active') {
+        filtered = filtered.filter(link => link.clicks > 0);
+    } else if (filter === 'inactive') {
+        filtered = filtered.filter(link => link.clicks === 0);
     }
     
-    // Calculate total clicks
-    const total = Object.values(referrers).reduce((sum, val) => sum + val, 0);
+    displayLinks(filtered);
+}
+
+function sortLinks(sortBy) {
+    let sorted = [...userLinks];
     
-    // Sort referrers by count and get data
-    const sortedReferrers = Object.entries(referrers)
-        .sort((a, b) => b[1] - a[1])
-        .map(([name, count]) => ({ name, count }));
+    if (sortBy === 'recent') {
+        sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (sortBy === 'clicks') {
+        sorted.sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
+    } else if (sortBy === 'oldest') {
+        sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    }
     
-    // Define colors for different referrers
-    const colorMap = {
-        'Google': '#EA4335',
-        'LinkedIn': '#0A66C2',
-        'Facebook': '#1877F2',
-        'Unknown': '#8B5CF6',
-        'Reddit': '#FF4500',
-        'Instagram': '#E1306C',
-        'X (formerly Twitter)': '#1DA1F2',
-        'Twitter': '#1DA1F2',
-        'Bitly Pages': '#2C3E50',
-        'Direct': '#64748B'
-    };
+    displayLinks(sorted);
+}
+
+function handleSearch(e) {
+    const query = e.target.value.toLowerCase();
     
-    // Map referrer names to display names
-    const nameMap = {
-        'twitter.com': 'X (formerly Twitter)',
-        'x.com': 'X (formerly Twitter)',
-        't.co': 'X (formerly Twitter)',
-        'Direct': 'Unknown'
-    };
+    const filtered = userLinks.filter(link => 
+        link.originalUrl.toLowerCase().includes(query) ||
+        link.shortUrl.toLowerCase().includes(query) ||
+        link.shortCode.toLowerCase().includes(query)
+    );
     
-    // Process data for chart
-    const chartData = sortedReferrers.map((ref, index) => {
-        let displayName = ref.name;
-        
-        // Try to extract domain name
-        if (ref.name.includes('://')) {
-            try {
-                const url = new URL(ref.name);
-                displayName = url.hostname.replace('www.', '');
-            } catch (e) {
-                displayName = ref.name;
-            }
-        }
-        
-        // Apply name mapping
-        displayName = nameMap[displayName] || displayName;
-        
-        // Capitalize first letter
-        displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-        
-        // Get color
-        const color = colorMap[displayName] || `hsl(${index * 40}, 70%, 50%)`;
-        
-        return {
-            name: displayName,
-            count: ref.count,
-            percentage: ((ref.count / total) * 100).toFixed(1),
-            color: color
-        };
+    displayLinks(filtered);
+}
+
+// ================================
+// LINK ACTIONS
+// ================================
+
+function copyLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        showToast('Link copied to clipboard!', 'success');
+    }).catch(() => {
+        showToast('Failed to copy link', 'error');
     });
-    
-    // Destroy existing chart if it exists
-    if (referrerChart) {
-        referrerChart.destroy();
-    }
-    
-    // Create donut chart
-    const ctx = canvas.getContext('2d');
-    referrerChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: chartData.map(d => d.name),
-            datasets: [{
-                data: chartData.map(d => d.count),
-                backgroundColor: chartData.map(d => d.color),
-                borderWidth: 3,
-                borderColor: '#ffffff'
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: false // We'll create custom legend
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            const label = context.label || '';
-                            const value = context.parsed;
-                            const percentage = ((value / total) * 100).toFixed(1);
-                            return `${label}: ${value} (${percentage}%)`;
-                        }
-                    }
-                }
-            },
-            cutout: '60%'
-        }
-    });
-    
-    // Create custom legend
-    legendContainer.innerHTML = `
-        <div class="referrer-total">
-            <div class="total-number">${total}</div>
-            <div class="total-label">CLICKS + SCANS</div>
-        </div>
-        <div class="referrer-list">
-            ${chartData.map(item => `
-                <div class="referrer-item">
-                    <div class="referrer-color" style="background-color: ${item.color}"></div>
-                    <div class="referrer-name">${item.name}</div>
-                    <div class="referrer-count">${item.count}</div>
-                </div>
-            `).join('')}
-        </div>
-    `;
 }
 
-// Track Impression
-async function trackImpression(shortCode) {
-    try {
-        await fetch(`/api/track/impression/${shortCode}`, {
-            method: 'POST'
-        });
-    } catch (error) {
-        console.error('Error tracking impression:', error);
-    }
+function viewAnalytics(shortCode) {
+    // Navigate to analytics page and load specific link
+    navigateToPage('analytics');
+    loadLinkAnalytics(shortCode);
 }
 
-// Share Link with Platform Detection
-async function shareLink(url, shortCode) {
-    // If called from dashboard, use parameters
-    if (arguments.length === 2) {
-        url = url;
-        currentShortCode = shortCode;
-    } else {
-        // If called from result section
-        url = shortUrlDisplay.value;
-    }
-    
-    // Show share menu for better tracking
-    showShareMenu(url, shortCode || currentShortCode);
-}
-
-// Show Share Menu with Platform Options
-function showShareMenu(baseUrl, shortCode) {
-    const platforms = [
-        { name: 'WhatsApp', icon: '💬', utm: 'whatsapp', url: `https://wa.me/?text=${encodeURIComponent(baseUrl + '?utm_source=whatsapp')}` },
-        { name: 'Instagram', icon: '📷', utm: 'instagram', copyOnly: true },
-        { name: 'Facebook', icon: '👥', utm: 'facebook', url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(baseUrl + '?utm_source=facebook')}` },
-        { name: 'Twitter/X', icon: '🐦', utm: 'twitter', url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(baseUrl + '?utm_source=twitter')}` },
-        { name: 'LinkedIn', icon: '💼', utm: 'linkedin', url: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(baseUrl + '?utm_source=linkedin')}` },
-        { name: 'Telegram', icon: '✈️', utm: 'telegram', url: `https://t.me/share/url?url=${encodeURIComponent(baseUrl + '?utm_source=telegram')}` },
-        { name: 'Copy Link', icon: '📋', utm: 'direct', copyOnly: true }
-    ];
-    
-    // Create modal
+function showQRCode(shortUrl, shortCode) {
+    // Create QR code modal
     const modal = document.createElement('div');
-    modal.className = 'share-modal';
+    modal.className = 'modal show';
     modal.innerHTML = `
-        <div class="share-modal-content">
-            <div class="share-modal-header">
-                <h3>📤 Share Link</h3>
-                <button class="share-modal-close" onclick="closeShareMenu()">&times;</button>
+        <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>QR Code</h3>
+                <button class="modal-close" onclick="this.closest('.modal').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <div class="share-info">
-                <p>💡 Each click from your shared link counts as a share!</p>
+            <div class="modal-body" style="text-align: center;">
+                <div id="qr-${shortCode}" style="display: inline-block; padding: 20px; background: white; border-radius: 12px;"></div>
+                <p style="margin-top: 16px; color: var(--text-secondary); font-size: 14px;">${shortUrl}</p>
             </div>
-            <div class="share-modal-body">
-                ${platforms.map(platform => `
-                    <button class="share-platform-btn" onclick="shareToplatform('${platform.utm}', '${baseUrl}', ${platform.copyOnly || false}, '${platform.url || ''}', '${shortCode}')">
-                        <span class="platform-icon">${platform.icon}</span>
-                        <span class="platform-name">${platform.name}</span>
-                    </button>
-                `).join('')}
-            </div>
-            <div class="share-footer">
-                <small>Share with friends and watch your analytics grow! 📊</small>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
-    setTimeout(() => modal.classList.add('show'), 10);
-}
-
-// Close Share Menu
-function closeShareMenu() {
-    const modal = document.querySelector('.share-modal');
-    if (modal) {
-        modal.classList.remove('show');
-        setTimeout(() => modal.remove(), 300);
-    }
-}
-
-// Share to Specific Platform
-async function shareToplatform(platform, baseUrl, copyOnly, shareUrl, shortCode) {
-    const trackedUrl = `${baseUrl}?utm_source=${platform}`;
-    
-    if (copyOnly) {
-        // Copy to clipboard
-        await navigator.clipboard.writeText(platform === 'direct' ? baseUrl : trackedUrl);
-        
-        // Show success message
-        const btn = event.target.closest('.share-platform-btn');
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = '<span class="platform-icon">✅</span><span class="platform-name">Copied!</span>';
-        
-        setTimeout(() => {
-            btn.innerHTML = originalHTML;
-        }, 2000);
-    } else {
-        // Open share URL
-        window.open(shareUrl, '_blank', 'width=600,height=400');
-        closeShareMenu();
-    }
-    
-    // Track share
-    if (shortCode) {
-        await fetch(`/api/track/share/${shortCode}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ platform })
-        });
-    }
-}
-
-// Go Back
-function goBack() {
-    analyticsSection.style.display = 'none';
-    
-    // Show dashboard instead of create form
-    showDashboard();
-    
-    // Unsubscribe from socket updates
-    if (currentShortCode) {
-        socket.off(`analytics:${currentShortCode}`);
-    }
-    
-    currentShortCode = null;
-}
-
-// QR Code Functions
-let qrCodeInstance = null;
-
-function showQRCode() {
-    const shortUrl = document.getElementById('shortUrlDisplay').value;
-    
-    if (!shortUrl) {
-        alert('No URL to generate QR code');
-        return;
-    }
-    
-    // Toggle QR code section
-    if (qrCodeSection.style.display === 'none' || qrCodeSection.style.display === '') {
-        qrCodeSection.style.display = 'block';
-        
-        // Clear previous QR code
-        qrCodeDisplay.innerHTML = '';
-        
-        // Generate new QR code
-        qrCodeInstance = new QRCode(qrCodeDisplay, {
-            text: shortUrl,
-            width: 256,
-            height: 256,
-            colorDark: "#09090b",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
-        
-        // Scroll to QR code
-        qrCodeSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    } else {
-        qrCodeSection.style.display = 'none';
-    }
-}
-
-function showLinkQRCode(shortUrl, shortCode) {
-    // Create modal for QR code
-    const modal = document.createElement('div');
-    modal.className = 'qr-modal';
-    modal.innerHTML = `
-        <div class="qr-modal-content">
-            <div class="qr-modal-header">
-                <h3>📱 QR Code</h3>
-                <button class="share-modal-close" onclick="closeQRModal()">&times;</button>
-            </div>
-            <div class="qr-modal-body">
-                <div class="qr-code-display-modal" id="qrCodeDisplayModal"></div>
-                <p class="qr-url-text">${shortUrl}</p>
-            </div>
-            <div class="qr-modal-footer">
-                <button class="primary-btn" onclick="downloadQRCodeModal('${shortCode}')">⬇️ Download QR Code</button>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="downloadQR('${shortCode}')">
+                    <i class="fas fa-download"></i> Download
+                </button>
             </div>
         </div>
     `;
@@ -842,97 +603,348 @@ function showLinkQRCode(shortUrl, shortCode) {
     document.body.appendChild(modal);
     
     // Generate QR code
-    new QRCode(document.getElementById('qrCodeDisplayModal'), {
+    new QRCode(document.getElementById(`qr-${shortCode}`), {
         text: shortUrl,
         width: 256,
         height: 256,
-        colorDark: "#09090b",
+        colorDark: "#000000",
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
     });
-    
-    setTimeout(() => modal.classList.add('show'), 10);
 }
 
-window.closeQRModal = function() {
-    const modal = document.querySelector('.qr-modal');
-    if (modal) {
-        modal.classList.remove('show');
-        setTimeout(() => modal.remove(), 300);
+function downloadQR(shortCode) {
+    const qrElement = document.getElementById(`qr-${shortCode}`);
+    const canvas = qrElement.querySelector('canvas');
+    
+    if (canvas) {
+        canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `zaplink-qr-${shortCode}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('QR code downloaded!', 'success');
+        });
     }
 }
 
-window.downloadQRCodeModal = function(shortCode) {
-    const canvas = document.querySelector('.qr-code-display-modal canvas');
-    
-    if (!canvas) {
-        alert('No QR code to download');
+function shareLink(url) {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Check out this link',
+            url: url
+        }).catch(() => {});
+    } else {
+        copyLink(url);
+    }
+}
+
+async function deleteLink(shortCode) {
+    if (!confirm('Are you sure you want to delete this link?')) {
         return;
     }
     
-    canvas.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
+    try {
+        const token = await getAuthToken();
+        const response = await fetch(`/api/links/${shortCode}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         
-        link.href = url;
-        link.download = `zaplink-qr-${shortCode}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        // Show success and close modal
-        alert('✅ QR Code downloaded!');
-        closeQRModal();
-    });
-}
-
-function downloadQRCode() {
-    const canvas = qrCodeDisplay.querySelector('canvas');
-    
-    if (!canvas) {
-        alert('No QR code to download');
-        return;
-    }
-    
-    // Convert canvas to blob and download
-    canvas.toBlob((blob) => {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        const shortUrl = document.getElementById('shortUrlDisplay').value;
-        const shortCode = shortUrl.split('/').pop();
-        
-        link.href = url;
-        link.download = `zaplink-qr-${shortCode}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        // Show success message
-        const originalText = downloadQrBtn.textContent;
-        downloadQrBtn.textContent = '✅ Downloaded!';
-        setTimeout(() => {
-            downloadQrBtn.textContent = originalText;
-        }, 2000);
-    });
-}
-
-// Socket connection status
-socket.on('connect', () => {
-    console.log('Connected to Zaplink server');
-});
-
-socket.on('disconnect', () => {
-    console.log('Disconnected from Zaplink server');
-});
-
-// Initialize: Check if user is already authenticated and show dashboard
-document.addEventListener('DOMContentLoaded', () => {
-    // Wait a bit for Firebase auth to initialize
-    setTimeout(() => {
-        if (isAuthenticated()) {
-            showDashboard();
+        if (response.ok) {
+            showToast('Link deleted successfully', 'success');
+            loadLinks();
+        } else {
+            showToast('Failed to delete link', 'error');
         }
-    }, 500);
-});
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to delete link', 'error');
+    }
+}
+
+// ================================
+// ANALYTICS
+// ================================
+
+async function loadAnalytics() {
+    // Load analytics overview
+    const analyticsLinkSelect = document.getElementById('analyticsLinkSelect');
+    
+    // Populate link selector
+    if (analyticsLinkSelect && userLinks.length > 0) {
+        analyticsLinkSelect.innerHTML = '<option value="all">All Links</option>' +
+            userLinks.map(link => `<option value="${link.shortCode}">${link.shortUrl}</option>`).join('');
+    }
+    
+    // Load analytics data
+    loadAnalyticsData('all');
+}
+
+async function loadLinkAnalytics(shortCode) {
+    const analyticsLinkSelect = document.getElementById('analyticsLinkSelect');
+    if (analyticsLinkSelect) {
+        analyticsLinkSelect.value = shortCode;
+    }
+    loadAnalyticsData(shortCode);
+}
+
+async function loadAnalyticsData(linkFilter) {
+    try {
+        const token = await getAuthToken();
+        const endpoint = linkFilter === 'all' ? '/api/analytics/overview' : `/api/analytics/${linkFilter}`;
+        
+        const response = await fetch(endpoint, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch analytics');
+        }
+        
+        const data = await response.json();
+        
+        // Update analytics stats
+        document.getElementById('analyticsClicks').textContent = data.totalClicks || 0;
+        document.getElementById('analyticsVisitors').textContent = data.uniqueVisitors || 0;
+        document.getElementById('analyticsCountries').textContent = data.countries || 0;
+        document.getElementById('analyticsAvgDaily').textContent = data.avgDaily || 0;
+        
+        // Render charts and lists
+        renderClicksChart(data.clicksOverTime || []);
+        renderReferrersChart(data.topReferrers || []);
+        renderGeographicList(data.geographic || []);
+        renderDevicesList(data.devices || []);
+        renderBrowsersList(data.browsers || []);
+        renderReferrersList(data.referrers || []);
+        
+    } catch (error) {
+        console.error('Error loading analytics:', error);
+        showToast('Failed to load analytics', 'error');
+    }
+}
+
+function renderClicksChart(data) {
+    // Implement with Chart.js
+    const ctx = document.getElementById('clicksChart');
+    if (!ctx) return;
+    
+    // Destroy existing chart if any
+    if (window.clicksChartInstance) {
+        window.clicksChartInstance.destroy();
+    }
+    
+    // Create new chart
+    window.clicksChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.date),
+            datasets: [{
+                label: 'Clicks',
+                data: data.map(d => d.count),
+                borderColor: '#8b5cf6',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function renderReferrersChart(data) {
+    // Implement with Chart.js
+    const ctx = document.getElementById('referrersChart');
+    if (!ctx) return;
+    
+    if (window.referrersChartInstance) {
+        window.referrersChartInstance.destroy();
+    }
+    
+    window.referrersChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.map(d => d.source),
+            datasets: [{
+                data: data.map(d => d.count),
+                backgroundColor: [
+                    '#8b5cf6',
+                    '#3b82f6',
+                    '#10b981',
+                    '#f59e0b',
+                    '#ef4444'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function renderGeographicList(data) {
+    const container = document.getElementById('geographicList');
+    if (!container) return;
+    
+    container.innerHTML = data.map(item => `
+        <div class="analytics-item">
+            <span class="analytics-item-label">${item.country}</span>
+            <span class="analytics-item-value">${item.count}</span>
+        </div>
+    `).join('') || '<p style="color: var(--text-secondary); text-align: center;">No data available</p>';
+}
+
+function renderDevicesList(data) {
+    const container = document.getElementById('devicesList');
+    if (!container) return;
+    
+    container.innerHTML = data.map(item => `
+        <div class="analytics-item">
+            <span class="analytics-item-label">${item.device}</span>
+            <span class="analytics-item-value">${item.count}</span>
+        </div>
+    `).join('') || '<p style="color: var(--text-secondary); text-align: center;">No data available</p>';
+}
+
+function renderBrowsersList(data) {
+    const container = document.getElementById('browsersList');
+    if (!container) return;
+    
+    container.innerHTML = data.map(item => `
+        <div class="analytics-item">
+            <span class="analytics-item-label">${item.browser}</span>
+            <span class="analytics-item-value">${item.count}</span>
+        </div>
+    `).join('') || '<p style="color: var(--text-secondary); text-align: center;">No data available</p>';
+}
+
+function renderReferrersList(data) {
+    const container = document.getElementById('referrersList');
+    if (!container) return;
+    
+    container.innerHTML = data.map(item => `
+        <div class="analytics-item">
+            <span class="analytics-item-label">${item.source}</span>
+            <span class="analytics-item-value">${item.count}</span>
+        </div>
+    `).join('') || '<p style="color: var(--text-secondary); text-align: center;">No data available</p>';
+}
+
+// ================================
+// PROFILE
+// ================================
+
+function loadProfile() {
+    if (!currentUser) return;
+    
+    const profileAvatar = document.getElementById('profileAvatar');
+    const profileName = document.getElementById('profileName');
+    const profileEmail = document.getElementById('profileEmail');
+    
+    if (profileAvatar) profileAvatar.src = currentUser.photoURL || 'https://via.placeholder.com/100';
+    if (profileName) profileName.value = currentUser.displayName || '';
+    if (profileEmail) profileEmail.value = currentUser.email || '';
+}
+
+// ================================
+// UTILITY FUNCTIONS
+// ================================
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+    return `${Math.floor(diffDays / 365)} years ago`;
+}
+
+function showToast(message, type = 'info') {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        padding: 16px 24px;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Add animation styles
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Make functions globally available
+window.copyLink = copyLink;
+window.viewAnalytics = viewAnalytics;
+window.showQRCode = showQRCode;
+window.downloadQR = downloadQR;
+window.shareLink = shareLink;
+window.deleteLink = deleteLink;
