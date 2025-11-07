@@ -1275,6 +1275,7 @@ async function loadAnalyticsData(linkFilter) {
         
         const db = firebase.firestore();
         let totalClicks = 0;
+        let totalImpressions = 0;
         let uniqueVisitors = new Set();
         let countries = new Set();
         let devices = {};
@@ -1313,8 +1314,9 @@ async function loadAnalyticsData(linkFilter) {
                 
                 console.log(`Analytics for ${shortCode}:`, analytics);
                 
-                // Aggregate clicks
+                // Aggregate clicks and impressions
                 totalClicks += analytics.clicks || 0;
+                totalImpressions += analytics.impressions || 0;
                 
                 // Merge devices
                 if (analytics.devices) {
@@ -1366,15 +1368,52 @@ async function loadAnalyticsData(linkFilter) {
         });
         const uniqueVisitorsCount = visitorFingerprints.size || totalClicks; // Fallback to total clicks if no history
         
-        // Calculate average daily clicks
-        const daysCount = Math.max(1, Math.ceil((Date.now() - (allClickHistory[0] ? new Date(allClickHistory[0].timestamp).getTime() : Date.now())) / (1000 * 60 * 60 * 24)));
-        const avgDaily = Math.round(totalClicks / daysCount);
+        // Calculate CTR (Click-Through Rate)
+        const ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100) : 0;
+        
+        // Calculate percentage changes (compare last 7 days vs previous 7 days)
+        const now = Date.now();
+        const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+        const fourteenDaysAgo = now - (14 * 24 * 60 * 60 * 1000);
+        
+        let currentPeriodClicks = 0;
+        let previousPeriodClicks = 0;
+        let currentPeriodVisitors = new Set();
+        let previousPeriodVisitors = new Set();
+        
+        allClickHistory.forEach(click => {
+            const clickTime = new Date(click.timestamp).getTime();
+            const fingerprint = `${click.referrer}_${click.device}_${click.browser}`;
+            
+            if (clickTime >= sevenDaysAgo) {
+                currentPeriodClicks++;
+                currentPeriodVisitors.add(fingerprint);
+            } else if (clickTime >= fourteenDaysAgo && clickTime < sevenDaysAgo) {
+                previousPeriodClicks++;
+                previousPeriodVisitors.add(fingerprint);
+            }
+        });
+        
+        // Calculate percentage changes
+        const clicksChange = calculatePercentageChange(currentPeriodClicks, previousPeriodClicks);
+        const visitorsChange = calculatePercentageChange(currentPeriodVisitors.size, previousPeriodVisitors.size);
+        
+        // For impressions and CTR, we'll need to implement historical tracking
+        // For now, we'll only show if we have comparison data
+        const impressionsChange = null; // Will implement when we have historical impression data
+        const ctrChange = null; // Will implement when we have historical CTR data
         
         // Update analytics stats in UI
+        document.getElementById('analyticsImpressions').textContent = totalImpressions.toLocaleString();
         document.getElementById('analyticsClicks').textContent = totalClicks.toLocaleString();
+        document.getElementById('analyticsCTR').textContent = ctr.toFixed(1) + '%';
         document.getElementById('analyticsVisitors').textContent = uniqueVisitorsCount.toLocaleString();
-        document.getElementById('analyticsCountries').textContent = countries.size.toLocaleString();
-        document.getElementById('analyticsAvgDaily').textContent = avgDaily.toLocaleString();
+        
+        // Update percentage changes (only show if we have comparison data)
+        updateStatChange('impressionsChange', impressionsChange);
+        updateStatChange('clicksChange', clicksChange);
+        updateStatChange('ctrChange', ctrChange);
+        updateStatChange('visitorsChange', visitorsChange);
         
         // Process clicks over time with dynamic granularity
         const clicksOverTimeData = processClicksOverTime(allClickHistory);
@@ -1643,6 +1682,33 @@ function renderReferrersList(data) {
             <span class="analytics-item-value">${item.count}</span>
         </div>
     `).join('') || '<p style="color: var(--text-secondary); text-align: center;">No data available</p>';
+}
+
+// Calculate percentage change between current and previous period
+function calculatePercentageChange(current, previous) {
+    if (previous === 0) {
+        return current > 0 ? { value: 100, isPositive: true } : null;
+    }
+    const change = ((current - previous) / previous) * 100;
+    return {
+        value: Math.abs(change),
+        isPositive: change >= 0
+    };
+}
+
+// Update stat change element
+function updateStatChange(elementId, changeData) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    if (!changeData || changeData.value === 0) {
+        element.style.display = 'none';
+        return;
+    }
+    
+    element.style.display = 'block';
+    element.className = `stat-change ${changeData.isPositive ? 'positive' : 'negative'}`;
+    element.textContent = `${changeData.isPositive ? '+' : '-'}${changeData.value.toFixed(1)}%`;
 }
 
 // ================================

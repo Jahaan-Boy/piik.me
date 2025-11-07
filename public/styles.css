@@ -710,6 +710,11 @@ body {
     color: var(--accent-blue);
 }
 
+.stat-icon.blue-light {
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(59, 130, 246, 0.2));
+    color: #60a5fa;
+}
+
 .stat-icon.green {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
     color: var(--accent-green);
