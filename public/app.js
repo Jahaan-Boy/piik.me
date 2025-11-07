@@ -65,6 +65,15 @@ const emptyState = document.getElementById('emptyState');
 const filterTabs = document.querySelectorAll('.filter-tab');
 const sortSelect = document.getElementById('sortSelect');
 const searchInput = document.getElementById('searchInput');
+const searchClear = document.getElementById('searchClear');
+const searchSuggestions = document.getElementById('searchSuggestions');
+
+// Global search data
+let searchableContent = {
+    links: [],
+    features: [],
+    pages: []
+};
 
 // Form Elements
 const customShortCode = document.getElementById('customShortCode');
@@ -311,10 +320,30 @@ function initializeEventListeners() {
         logoutBtn.addEventListener('click', handleLogout);
     }
     
-    // Search
+    // Global Search
     if (searchInput) {
-        searchInput.addEventListener('input', handleSearch);
+        searchInput.addEventListener('input', handleGlobalSearch);
+        searchInput.addEventListener('focus', () => {
+            if (searchInput.value.trim()) {
+                searchSuggestions.style.display = 'block';
+            }
+        });
     }
+    
+    if (searchClear) {
+        searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            searchClear.style.display = 'none';
+            searchSuggestions.style.display = 'none';
+        });
+    }
+    
+    // Close search suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-container')) {
+            searchSuggestions.style.display = 'none';
+        }
+    });
     
     // Bug Report Modal
     if (reportBugBtn) {
@@ -941,6 +970,201 @@ function handleSearch(e) {
     
     displayLinks(filtered);
 }
+
+// ================================
+// GLOBAL SEARCH
+// ================================
+
+function initializeGlobalSearch() {
+    // Define searchable features
+    searchableContent.features = [
+        { name: 'Create Link', description: 'Shorten a new URL', icon: 'plus', action: () => openCreateLinkModal() },
+        { name: 'Analytics Dashboard', description: 'View detailed analytics', icon: 'chart-line', action: () => navigateToPage('analytics') },
+        { name: 'QR Code Generator', description: 'Generate QR codes for links', icon: 'qrcode', action: () => openCreateLinkModal() },
+        { name: 'Custom Short Code', description: 'Create custom branded links', icon: 'edit', action: () => openCreateLinkModal() },
+        { name: 'UTM Parameters', description: 'Add tracking parameters', icon: 'tags', action: () => openCreateLinkModal() },
+        { name: 'Report Bug', description: 'Report an issue', icon: 'bug', action: () => openBugReportModal() },
+        { name: 'Dark Mode', description: 'Toggle dark theme', icon: 'moon', action: () => setTheme('dark') },
+        { name: 'Light Mode', description: 'Toggle light theme', icon: 'sun', action: () => setTheme('light') },
+    ];
+    
+    // Define searchable pages
+    searchableContent.pages = [
+        { name: 'Home', description: 'View all your links', icon: 'home', path: 'home' },
+        { name: 'Analytics', description: 'Detailed analytics dashboard', icon: 'chart-line', path: 'analytics' },
+        { name: 'Profile', description: 'Manage your profile', icon: 'user', path: 'profile' },
+    ];
+}
+
+function handleGlobalSearch(e) {
+    const query = e.target.value.trim();
+    
+    // Show/hide clear button
+    if (searchClear) {
+        searchClear.style.display = query ? 'block' : 'none';
+    }
+    
+    if (query.length < 2) {
+        searchSuggestions.style.display = 'none';
+        return;
+    }
+    
+    const results = performGlobalSearch(query);
+    displaySearchSuggestions(results);
+}
+
+function performGlobalSearch(query) {
+    const lowerQuery = query.toLowerCase();
+    const results = {
+        links: [],
+        features: [],
+        pages: []
+    };
+    
+    // Search links
+    results.links = userLinks
+        .filter(link => 
+            link.originalUrl.toLowerCase().includes(lowerQuery) ||
+            link.shortUrl.toLowerCase().includes(lowerQuery) ||
+            link.shortCode.toLowerCase().includes(lowerQuery)
+        )
+        .slice(0, 5); // Limit to 5 results
+    
+    // Search features
+    results.features = searchableContent.features
+        .filter(feature => 
+            feature.name.toLowerCase().includes(lowerQuery) ||
+            feature.description.toLowerCase().includes(lowerQuery)
+        )
+        .slice(0, 4);
+    
+    // Search pages
+    results.pages = searchableContent.pages
+        .filter(page => 
+            page.name.toLowerCase().includes(lowerQuery) ||
+            page.description.toLowerCase().includes(lowerQuery)
+        );
+    
+    return results;
+}
+
+function displaySearchSuggestions(results) {
+    const hasResults = results.links.length > 0 || results.features.length > 0 || results.pages.length > 0;
+    
+    if (!hasResults) {
+        searchSuggestions.innerHTML = `
+            <div class="search-no-results">
+                <i class="fas fa-search"></i>
+                <p>No results found</p>
+            </div>
+        `;
+        searchSuggestions.style.display = 'block';
+        return;
+    }
+    
+    let html = '';
+    
+    // Display links
+    if (results.links.length > 0) {
+        html += `
+            <div class="search-suggestion-group">
+                <div class="search-suggestion-header">Links</div>
+                ${results.links.map(link => `
+                    <div class="search-suggestion-item" onclick="handleSuggestionClick('link', '${link.shortCode}')">
+                        <div class="search-suggestion-icon link">
+                            <i class="fas fa-link"></i>
+                        </div>
+                        <div class="search-suggestion-content">
+                            <div class="search-suggestion-title">${escapeHtml(link.shortUrl)}</div>
+                            <div class="search-suggestion-subtitle">${escapeHtml(truncateText(link.originalUrl, 50))}</div>
+                        </div>
+                        <div class="search-suggestion-meta">${link.clicks || 0} clicks</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // Display features
+    if (results.features.length > 0) {
+        html += `
+            <div class="search-suggestion-group">
+                <div class="search-suggestion-header">Features</div>
+                ${results.features.map((feature, index) => `
+                    <div class="search-suggestion-item" onclick="handleSuggestionClick('feature', ${index})">
+                        <div class="search-suggestion-icon feature">
+                            <i class="fas fa-${feature.icon}"></i>
+                        </div>
+                        <div class="search-suggestion-content">
+                            <div class="search-suggestion-title">${escapeHtml(feature.name)}</div>
+                            <div class="search-suggestion-subtitle">${escapeHtml(feature.description)}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    // Display pages
+    if (results.pages.length > 0) {
+        html += `
+            <div class="search-suggestion-group">
+                <div class="search-suggestion-header">Pages</div>
+                ${results.pages.map(page => `
+                    <div class="search-suggestion-item" onclick="handleSuggestionClick('page', '${page.path}')">
+                        <div class="search-suggestion-icon page">
+                            <i class="fas fa-${page.icon}"></i>
+                        </div>
+                        <div class="search-suggestion-content">
+                            <div class="search-suggestion-title">${escapeHtml(page.name)}</div>
+                            <div class="search-suggestion-subtitle">${escapeHtml(page.description)}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    searchSuggestions.innerHTML = html;
+    searchSuggestions.style.display = 'block';
+}
+
+function handleSuggestionClick(type, data) {
+    // Close suggestions
+    searchSuggestions.style.display = 'none';
+    searchInput.value = '';
+    searchClear.style.display = 'none';
+    
+    if (type === 'link') {
+        // Navigate to analytics for this specific link
+        viewAnalytics(data);
+    } else if (type === 'feature') {
+        // Execute feature action
+        const feature = searchableContent.features[data];
+        if (feature && feature.action) {
+            feature.action();
+        }
+    } else if (type === 'page') {
+        // Navigate to page
+        navigateToPage(data);
+    }
+}
+
+function truncateText(text, maxLength) {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Initialize global search when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    initializeGlobalSearch();
+});
 
 // ================================
 // LINK ACTIONS
@@ -1841,6 +2065,7 @@ window.showQRCode = showQRCode;
 window.downloadQR = downloadQR;
 window.shareLink = shareLink;
 window.deleteLink = deleteLink;
+window.handleSuggestionClick = handleSuggestionClick;
 
 // ================================
 // BUG REPORT FUNCTIONALITY

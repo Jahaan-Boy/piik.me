@@ -78,9 +78,17 @@
                 <h1 class="page-title" id="pageTitle">Home</h1>
             </div>
             <div class="topbar-right">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search links..." id="searchInput">
+                <div class="search-container">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Search links, features, or anything..." id="searchInput" autocomplete="off">
+                        <button class="search-clear" id="searchClear" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="search-suggestions" id="searchSuggestions" style="display: none;">
+                        <!-- Suggestions will be populated here -->
+                    </div>
                 </div>
                 <a href="https://github.com/xthxr/ZapLink" target="_blank" rel="noopener noreferrer" 
                    class="icon-btn github-btn" title="Star on GitHub">
