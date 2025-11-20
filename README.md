@@ -13,7 +13,7 @@
 
 <p align="center">
   <a href="https://github.com/xthxr/Link360">
-    <img src="assets/thumbnail.png" alt="Link360 — Hyper Analytics Platform for Links" width="1000" />
+    <img src="public/assets/thumbnail.png" alt="Link360 — Hyper Analytics Platform for Links" width="1000" />
   </a>
   <p align="center"><em>Cool Analytics Dashboard — Live, Real-time Metrics</em></p>
 </p>
