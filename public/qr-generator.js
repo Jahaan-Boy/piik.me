@@ -531,21 +531,25 @@ const QRGenerator = {
 };
 
 // Initialize when QR Generator page is shown
-document.addEventListener('DOMContentLoaded', () => {
-    const qrGeneratorPage = document.getElementById('qrGeneratorPage');
-    if (qrGeneratorPage) {
-        // Initialize when navigating to QR Generator page
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.attributeName === 'style') {
-                    const isVisible = qrGeneratorPage.style.display !== 'none';
-                    if (isVisible && !QRGenerator.initialized) {
-                        QRGenerator.init();
-                        QRGenerator.initialized = true;
+if (typeof window !== 'undefined') {
+    window.QRGenerator = QRGenerator;
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        const qrGeneratorPage = document.getElementById('qrGeneratorPage');
+        if (qrGeneratorPage) {
+            // Initialize when navigating to QR Generator page
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.attributeName === 'style') {
+                        const isVisible = qrGeneratorPage.style.display !== 'none';
+                        if (isVisible && !QRGenerator.initialized) {
+                            QRGenerator.init();
+                            QRGenerator.initialized = true;
+                        }
                     }
-                }
+                });
             });
-        });
-        observer.observe(qrGeneratorPage, { attributes: true });
-    }
-});
+            observer.observe(qrGeneratorPage, { attributes: true });
+        }
+    });
+}
