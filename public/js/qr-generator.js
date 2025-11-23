@@ -13,7 +13,29 @@ const QRGenerator = {
         this.cacheDom();
         this.bindEvents();
         this.loadUserLinks();
+        this.createFloatingPreview();
         this.initScrollBehavior();
+    },
+
+    createFloatingPreview() {
+        // Create floating preview container
+        const floatingPreview = document.createElement('div');
+        floatingPreview.className = 'qr-floating-preview';
+        floatingPreview.id = 'floatingQRPreview';
+        floatingPreview.innerHTML = `
+            <div class="floating-header">
+                <span class="floating-title">Live Preview</span>
+                <button class="floating-close" onclick="document.getElementById('floatingQRPreview').classList.remove('show')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="floating-qr-container">
+                <canvas id="floatingQRCanvas" width="176" height="176"></canvas>
+            </div>
+        `;
+        document.body.appendChild(floatingPreview);
+        this.floatingCanvas = document.getElementById('floatingQRCanvas');
+        this.floatingPreview = floatingPreview;
     },
 
     initScrollBehavior() {
@@ -25,17 +47,28 @@ const QRGenerator = {
             clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(() => {
                 const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                const previewRect = qrPreviewCard.getBoundingClientRect();
                 
-                // Add compact class when scrolled down more than 200px
-                if (scrollTop > 200) {
-                    qrPreviewCard.classList.add('compact');
+                // Show floating preview when main preview goes out of view
+                if (previewRect.top < -100 && this.currentLink) {
+                    this.floatingPreview.classList.add('show');
+                    this.updateFloatingPreview();
                 } else {
-                    qrPreviewCard.classList.remove('compact');
+                    this.floatingPreview.classList.remove('show');
                 }
-            }, 10);
+            }, 50);
         };
 
         window.addEventListener('scroll', handleScroll);
+    },
+
+    updateFloatingPreview() {
+        // Copy main canvas to floating canvas
+        if (this.qrCanvas && this.floatingCanvas) {
+            const ctx = this.floatingCanvas.getContext('2d');
+            ctx.clearRect(0, 0, 176, 176);
+            ctx.drawImage(this.qrCanvas, 0, 0, 176, 176);
+        }
     },
 
     cacheDom() {
@@ -224,6 +257,9 @@ const QRGenerator = {
 
                     this.qrCanvas.style.display = 'block';
                     this.downloadBtn.disabled = false;
+                    
+                    // Update floating preview
+                    setTimeout(() => this.updateFloatingPreview(), 100);
                 } catch (drawError) {
                     document.body.removeChild(tempContainer);
                     throw drawError;
@@ -251,6 +287,9 @@ const QRGenerator = {
         if (this.currentFrame && this.currentFrame !== 'none') {
             this.applyFrame(ctx, 400);
         }
+        
+        // Update floating preview
+        this.updateFloatingPreview();
     },
 
     applyPatternOverlay(ctx) {
