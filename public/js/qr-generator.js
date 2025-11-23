@@ -479,7 +479,7 @@ const QRGenerator = {
                 .get();
 
             if (linksSnapshot.empty) {
-                this.quickLinksGrid.innerHTML = '<p class="text-muted">Create some links first!</p>';
+                this.quickLinksGrid.innerHTML = '<p class="text-muted">Create some links first to generate QR codes!</p>';
                 return;
             }
 
@@ -489,8 +489,13 @@ const QRGenerator = {
                 const btn = document.createElement('button');
                 btn.className = 'quick-link-btn';
                 btn.innerHTML = `
-                    <span class="link-short">${window.location.origin}/${link.shortCode}</span>
-                    <span class="link-original">${link.originalUrl}</span>
+                    <div class="quick-link-header">
+                        <span class="link-short">${window.location.origin}/${link.shortCode}</span>
+                        <span class="link-clicks">
+                            <i class="fas fa-mouse-pointer"></i> ${link.clicks || 0} clicks
+                        </span>
+                    </div>
+                    <span class="link-original">${this.truncateUrl(link.originalUrl, 40)}</span>
                 `;
                 btn.addEventListener('click', () => {
                     this.qrLinkInput.value = `${window.location.origin}/${link.shortCode}`;
@@ -501,7 +506,13 @@ const QRGenerator = {
 
         } catch (error) {
             console.error('Error loading links:', error);
+            this.quickLinksGrid.innerHTML = '<p class="text-muted">Error loading links. Please refresh.</p>';
         }
+    },
+
+    truncateUrl(url, maxLength) {
+        if (url.length <= maxLength) return url;
+        return url.substring(0, maxLength - 3) + '...';
     },
 
     showNotification(message, type = 'info') {

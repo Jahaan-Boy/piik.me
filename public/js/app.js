@@ -1251,7 +1251,10 @@ function showQRCode(shortUrl, shortCode) {
                 <div id="qr-${shortCode}" style="display: inline-block; padding: 20px; background: white; border-radius: 12px;"></div>
                 <p style="margin-top: 16px; color: var(--text-secondary); font-size: 14px;">${shortUrl}</p>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="customizeQR('${shortUrl}')">
+                    <i class="fas fa-palette"></i> Customize
+                </button>
                 <button class="btn btn-primary" onclick="downloadQR('${shortCode}')">
                     <i class="fas fa-download"></i> Download
                 </button>
@@ -1270,6 +1273,27 @@ function showQRCode(shortUrl, shortCode) {
         colorLight: "#ffffff",
         correctLevel: QRCode.CorrectLevel.H
     });
+}
+
+function customizeQR(url) {
+    // Close the QR modal
+    const modal = document.querySelector('.modal.show');
+    if (modal) modal.remove();
+    
+    // Navigate to QR Generator page
+    navigateToPage('qr-generator');
+    
+    // Wait for page to initialize, then set the URL
+    setTimeout(() => {
+        const qrInput = document.getElementById('qrLinkInput');
+        if (qrInput) {
+            qrInput.value = url;
+            // Auto-generate the QR code
+            if (window.QRGenerator && window.QRGenerator.generateQR) {
+                window.QRGenerator.generateQR();
+            }
+        }
+    }, 300);
 }
 
 function downloadQR(shortCode) {
