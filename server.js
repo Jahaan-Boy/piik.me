@@ -474,7 +474,7 @@ app.post('/api/bug-report', async (req, res) => {
 // This ensures all app routes (/home, /analytics, /profile) serve the index.html
 // Must be BEFORE the /:shortCode route to avoid conflicts
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'landing.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get(['/home', '/analytics', '/profile'], (req, res) => {

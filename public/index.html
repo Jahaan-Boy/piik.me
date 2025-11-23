@@ -577,10 +577,90 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
-    <div class="modal" id="loginModal" style="display: flex;">
-        <div class="modal-overlay"></div>
+    <!-- Landing Page (shown when not authenticated) -->
+    <div class="landing-page" id="landingPage" style="display: none;">
+        <!-- Navigation -->
+        <nav class="landing-nav">
+            <div class="landing-nav-container">
+                <div class="landing-logo">
+                    <img src="assets/logo.png" alt="Link360" class="landing-logo-image">
+                    <span class="landing-logo-text">Link360</span>
+                </div>
+                
+                <div class="landing-nav-menu">
+                    <a href="https://github.com/xthxr/Link360/blob/main/README.md" target="_blank" class="landing-nav-item">Docs</a>
+                    <a href="https://github.com/xthxr/Link360" target="_blank" class="landing-nav-github">
+                        <i class="fab fa-github"></i>
+                        <span>3</span>
+                    </a>
+                    <button class="landing-btn-primary" id="landingLoginBtn">
+                        Try Link360
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="landing-hero">
+            <div class="landing-hero-content">
+                <h1 class="landing-title">
+                    Hyper-Analytics, Zero Latency <br>
+                    <span class="landing-gradient-text">for all your links</span>
+                </h1>
+
+                <p class="landing-description">
+                    A safe and secured gold mine for business owners, and a nightmare for so-called premium UTM linkalizers, because we made it all free!
+                </p>
+
+                <div class="landing-actions">
+                    <button class="landing-btn-hero" id="heroGetStartedBtn">
+                        <span>Get Started</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <a href="https://github.com/xthxr/Link360" target="_blank" class="landing-btn-secondary">
+                        <i class="fab fa-github"></i>
+                        View on GitHub
+                    </a>
+                </div>
+            </div>
+
+            <!-- Animated Background -->
+            <div class="landing-bg">
+                <div class="landing-orb landing-orb-1"></div>
+                <div class="landing-orb landing-orb-2"></div>
+                <div class="landing-orb landing-orb-3"></div>
+            </div>
+        </section>
+
+        <!-- Feature Suggestions Section -->
+        <section class="landing-suggestions">
+            <div class="landing-suggestions-content">
+                <h2 class="landing-suggestions-title">We're cooking amazing features, you can suggest something too:</h2>
+                <form class="landing-suggestions-form" id="suggestionsForm">
+                    <input 
+                        type="text" 
+                        id="suggestionInput" 
+                        class="landing-suggestions-input" 
+                        placeholder="Share your feature idea..."
+                        required
+                    >
+                    <button type="submit" class="landing-suggestions-btn">
+                        <span>Suggest</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <!-- Login Modal (shown when user clicks login) -->
+    <div class="modal" id="loginModal" style="display: none;">
+        <div class="modal-overlay" id="loginModalOverlay"></div>
         <div class="modal-content login-modal">
+            <button class="modal-close" id="loginModalClose">
+                <i class="fas fa-times"></i>
+            </button>
             <div class="login-header">
                 <div class="login-logo">
                     <img src="assets/logo.png" alt="Link360" class="login-logo-image">
@@ -590,24 +670,7 @@
                     </div>
                 </div>
                 <h2>Welcome to Link360</h2>
-                <p>Free & Open Source Real-Time Link Analytics</p>
-            </div>
-            
-            <div class="login-description">
-                <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6; margin: 0 0 20px 0; text-align: center;">
-                    <strong>Link360</strong> is a free and open-source URL shortener with powerful real-time analytics. 
-                    Track clicks, devices, browsers, referrers, and generate QR codes instantly. 
-                    Built with Firebase for ultra-fast performance and zero latency updates.
-                </p>
-                <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 24px;">
-                    <a href="https://github.com/xthxr/ZapLink" target="_blank" rel="noopener noreferrer" 
-                       style="display: inline-flex; align-items: center; gap: 6px; color: var(--accent-purple); text-decoration: none; font-size: 14px; font-weight: 500; transition: var(--transition-fast);">
-                        <i class="fab fa-github"></i>
-                        Star on GitHub
-                    </a>
-                    <span style="color: var(--text-tertiary);">•</span>
-                    <span style="color: var(--text-tertiary); font-size: 13px;">100% Free Forever</span>
-                </div>
+                <p>Sign in to start tracking your links</p>
             </div>
             
             <div class="modal-body">

@@ -478,6 +478,12 @@ async function initializeAuth() {
                 currentUser = user;
                 showAuthenticatedUI();
                 
+                // Show app, hide landing
+                const landingPage = document.getElementById('landingPage');
+                const appContainer = document.getElementById('app');
+                if (landingPage) landingPage.style.display = 'none';
+                if (appContainer) appContainer.style.display = 'flex';
+                
                 // Get current page from URL instead of localStorage
                 const currentPath = window.location.pathname;
                 const currentPageFromUrl = currentPath.substring(1) || 'home';
@@ -495,10 +501,10 @@ async function initializeAuth() {
             }
         } catch (error) {
             console.error('Auth error:', error);
-            showLoginModal();
+            showLandingPage();
         }
     } else {
-        showLoginModal();
+        showLandingPage();
     }
     
     // Handle redirect result
@@ -561,13 +567,29 @@ function showAuthenticatedUI() {
         // Update topbar user info
         topbarUserPhoto.src = currentUser.photoURL || 'https://via.placeholder.com/40';
         
-        // Hide login modal
-        loginModal.style.display = 'none';
+        // Hide login modal and landing page
+        const loginModal = document.getElementById('loginModal');
+        const landingPage = document.getElementById('landingPage');
+        if (loginModal) loginModal.style.display = 'none';
+        if (landingPage) landingPage.style.display = 'none';
     }
 }
 
 function showLoginModal() {
-    loginModal.style.display = 'flex';
+    const loginModal = document.getElementById('loginModal');
+    const landingPage = document.getElementById('landingPage');
+    if (loginModal) loginModal.style.display = 'flex';
+    if (landingPage) landingPage.style.display = 'none';
+}
+
+function showLandingPage() {
+    const loginModal = document.getElementById('loginModal');
+    const landingPage = document.getElementById('landingPage');
+    const appContainer = document.getElementById('app');
+    
+    if (landingPage) landingPage.style.display = 'block';
+    if (loginModal) loginModal.style.display = 'none';
+    if (appContainer) appContainer.style.display = 'none';
 }
 
 async function handleLogout(e) {
@@ -578,7 +600,7 @@ async function handleLogout(e) {
             await firebase.auth().signOut();
             currentUser = null;
             userLinks = [];
-            showLoginModal();
+            showLandingPage();
             showToast('Logged out successfully', 'success');
         } catch (error) {
             console.error('Logout error:', error);
@@ -2155,3 +2177,43 @@ async function handleBugReport(e) {
         }
     }
 }
+
+// Landing page event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    const landingLoginBtn = document.getElementById('landingLoginBtn');
+    const heroGetStartedBtn = document.getElementById('heroGetStartedBtn');
+    const loginModalClose = document.getElementById('loginModalClose');
+    const suggestionsForm = document.getElementById('suggestionsForm');
+    const suggestionInput = document.getElementById('suggestionInput');
+    
+    if (landingLoginBtn) {
+        landingLoginBtn.addEventListener('click', showLoginModal);
+    }
+    
+    if (heroGetStartedBtn) {
+        heroGetStartedBtn.addEventListener('click', showLoginModal);
+    }
+    
+    if (loginModalClose) {
+        loginModalClose.addEventListener('click', () => {
+            loginModal.style.display = 'none';
+        });
+    }
+    
+    if (suggestionsForm) {
+        suggestionsForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const suggestion = suggestionInput.value.trim();
+            
+            if (suggestion) {
+                // Redirect to GitHub discussions with pre-filled title
+                const discussionUrl = `https://github.com/xthxr/Link360/discussions/new?category=ideas&title=${encodeURIComponent(suggestion)}`;
+                window.open(discussionUrl, '_blank');
+                
+                // Clear input
+                suggestionInput.value = '';
+                showToast('Opening GitHub Discussions...', 'success');
+            }
+        });
+    }
+});
