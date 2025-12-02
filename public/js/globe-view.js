@@ -103,34 +103,48 @@ async function initializeGlobe() {
     // Clear container
     container.innerHTML = '';
     
-    // Create globe instance
+    // Create globe instance with Shopify-like styling
     globeInstance = Globe()
         (container)
-        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-night.jpg')
+        .globeImageUrl('//unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
         .bumpImageUrl('//unpkg.com/three-globe/example/img/earth-topology.png')
-        .backgroundImageUrl('//unpkg.com/three-globe/example/img/night-sky.png')
+        .backgroundColor('rgba(255,255,255,0)')
+        .showAtmosphere(true)
+        .atmosphereColor('#3b82f6')
+        .atmosphereAltitude(0.12)
         .pointsData([])
-        .pointAltitude(0.01)
-        .pointColor(() => '#00ffaa')
-        .pointRadius(0.4)
+        .pointAltitude(0.005)
+        .pointColor(() => '#10b981')
+        .pointRadius(d => d.size || 0.5)
+        .pointsMerge(true)
         .pointLabel(d => `
-            <div style="background: rgba(0, 0, 0, 0.9); padding: 12px; border-radius: 8px; color: white; font-family: 'Inter', sans-serif;">
-                <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">${d.city}, ${d.region}</div>
-                <div style="font-size: 12px; color: #aaa;">${d.country}</div>
-                <div style="font-size: 16px; font-weight: 700; color: #00ffaa; margin-top: 6px;">${d.clicks} click${d.clicks > 1 ? 's' : ''}</div>
+            <div style="background: white; padding: 12px 16px; border-radius: 10px; color: #1a1a1a; font-family: 'Inter', sans-serif; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border: 1px solid #e5e7eb;">
+                <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px; color: #111;">${d.city}, ${d.region}</div>
+                <div style="font-size: 12px; color: #6b7280; margin-bottom: 6px;">${d.country}</div>
+                <div style="font-size: 15px; font-weight: 700; color: #10b981;">${d.clicks} visit${d.clicks > 1 ? 's' : ''}</div>
             </div>
         `)
-        .arcsData([])
-        .arcColor(() => 'rgba(0, 255, 170, 0.4)')
-        .arcDashLength(0.4)
-        .arcDashGap(0.2)
-        .arcDashAnimateTime(4000)
-        .arcStroke(0.5)
-        .atmosphereColor('#00ffaa')
-        .atmosphereAltitude(0.15);
+        .hexPolygonsData([])
+        .hexPolygonResolution(3)
+        .hexPolygonMargin(0.3)
+        .hexPolygonColor(() => 'rgba(59, 130, 246, 0.15)');
     
-    // Set initial view
-    globeInstance.pointOfView({ altitude: 2.5 });
+    // Configure controls for smooth interaction
+    const controls = globeInstance.controls();
+    controls.autoRotate = false;
+    controls.autoRotateSpeed = 0.5;
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.1;
+    controls.rotateSpeed = 0.5;
+    controls.minDistance = 180;
+    controls.maxDistance = 500;
+    
+    // Set initial view - centered and zoomed appropriately
+    globeInstance.pointOfView({ 
+        lat: 20, 
+        lng: 0, 
+        altitude: 2.2 
+    }, 0);
     
     // Update with actual data
     await updateGlobeData();
@@ -184,7 +198,8 @@ async function updateGlobeData() {
     // Update globe with points
     globeInstance
         .pointsData(pointsData)
-        .pointRadius(d => d.size);
+        .pointRadius(d => Math.max(0.3, Math.min(d.clicks * 0.15, 1.2)))
+        .pointAltitude(0.005);
     
     // Update locations list
     updateGlobeLocationsList(pointsData);
@@ -198,14 +213,31 @@ async function updateGlobeData() {
 // Update the locations list below the globe
 function updateGlobeLocationsList(points) {
     const container = document.getElementById('globeLocationsList');
+    const countBadge = document.getElementById('globeLocationsCount');
+    
     if (!container) return;
+    
+    // Update count badge
+    if (countBadge) {
+        countBadge.textContent = `${points.length} location${points.length !== 1 ? 's' : ''}`;
+    }
     
     // Sort by clicks (descending)
     points.sort((a, b) => b.clicks - a.clicks);
     
+    if (points.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-secondary);">
+                <i class="fas fa-map-marked-alt" style="font-size: 48px; opacity: 0.3; margin-bottom: 12px;"></i>
+                <p>No location data available</p>
+            </div>
+        `;
+        return;
+    }
+    
     container.innerHTML = points.map((point, index) => `
-        <div class="globe-location-item" onclick="focusOnLocation(${point.lat}, ${point.lng})">
-            <div class="location-marker" style="background: #00ffaa;"></div>
+        <div class="globe-location-item" onclick="focusOnLocation(${point.lat}, ${point.lng})" title="Click to focus on ${point.city}">
+            <div class="location-marker"></div>
             <div class="location-info">
                 <div class="location-name">${point.city}, ${point.region}</div>
                 <div class="location-country">${point.country}</div>
@@ -219,11 +251,12 @@ function updateGlobeLocationsList(points) {
 function focusOnLocation(lat, lng) {
     if (!globeInstance) return;
     
+    // Smooth transition to location
     globeInstance.pointOfView({
         lat: lat,
         lng: lng,
-        altitude: 1.5
-    }, 1000);
+        altitude: 1.8
+    }, 1200);
 }
 
 // Reset globe view
@@ -231,10 +264,10 @@ function resetGlobeView() {
     if (!globeInstance) return;
     
     globeInstance.pointOfView({
-        lat: 0,
+        lat: 20,
         lng: 0,
-        altitude: 2.5
-    }, 1000);
+        altitude: 2.2
+    }, 1200);
 }
 
 // Toggle auto-rotation
@@ -258,20 +291,15 @@ function startGlobeRotation() {
     if (rotationIcon) rotationIcon.classList.add('fa-spin');
     if (rotationText) rotationText.textContent = 'Stop Rotation';
     
-    // Rotate globe
-    let angle = 0;
-    rotationAnimation = setInterval(() => {
-        angle += 0.3;
-        const pov = globeInstance.pointOfView();
-        globeInstance.pointOfView({
-            lat: pov.lat,
-            lng: angle,
-            altitude: pov.altitude
-        });
-    }, 50);
+    // Use built-in auto-rotate for smoother performance
+    const controls = globeInstance.controls();
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.8;
 }
 
 function stopGlobeRotation() {
+    if (!globeInstance) return;
+    
     isRotating = false;
     const rotationIcon = document.getElementById('rotationIcon');
     const rotationText = document.getElementById('rotationText');
@@ -279,10 +307,9 @@ function stopGlobeRotation() {
     if (rotationIcon) rotationIcon.classList.remove('fa-spin');
     if (rotationText) rotationText.textContent = 'Auto-Rotate';
     
-    if (rotationAnimation) {
-        clearInterval(rotationAnimation);
-        rotationAnimation = null;
-    }
+    // Stop built-in auto-rotate
+    const controls = globeInstance.controls();
+    controls.autoRotate = false;
 }
 
 // Initialize when window loads
