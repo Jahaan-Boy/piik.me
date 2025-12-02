@@ -640,7 +640,8 @@ app.get('/:shortCode', async (req, res) => {
     referrer: referrerSource,
     userAgent: userAgent.substring(0, 200), // Store truncated UA for debugging
     isShared: utmSource ? true : false, // Track if this click came from a share
-    location: locationData
+    location: locationData,
+    ipAddress: clientIP // Store IP address for detailed analytics
   };
 
   try {

@@ -307,6 +307,9 @@
                     <div class="analytics-card">
                         <div class="card-header">
                             <h3><i class="fas fa-globe"></i> Geographic Data</h3>
+                            <button class="btn btn-sm btn-secondary" id="seeMoreGeoBtn" onclick="openDetailedGeographicView()">
+                                <i class="fas fa-expand-alt"></i> See More
+                            </button>
                         </div>
                         <div class="card-body">
                             <div class="analytics-list" id="geographicList">
@@ -577,6 +580,115 @@
                                     <i class="fas fa-download"></i> Download QR Code
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Detailed Geographic Analytics Page -->
+            <section class="page" id="geo-detailsPage" style="display: none;">
+                <div class="page-header">
+                    <div class="header-content">
+                        <button class="btn btn-secondary" onclick="navigateToPage('analytics')" style="margin-bottom: 12px;">
+                            <i class="fas fa-arrow-left"></i> Back to Analytics
+                        </button>
+                        <h2>Detailed Geographic Analytics</h2>
+                        <p class="header-subtitle">Complete click details with IP addresses and locations</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" id="exportGeoDataBtn">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Location Summary Stats -->
+                <div class="stats-grid" style="margin-bottom: 24px;">
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="totalLocations">0</span>
+                            <span class="stat-label">Unique Locations</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-flag"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="totalCountries">0</span>
+                            <span class="stat-label">Countries</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <i class="fas fa-city"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="totalCities">0</span>
+                            <span class="stat-label">Cities</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">
+                            <i class="fas fa-mouse-pointer"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value" id="totalGeoClicks">0</span>
+                            <span class="stat-label">Total Clicks</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters-bar" style="margin-bottom: 24px;">
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" data-filter="all" onclick="filterGeoData('all')">All Clicks</button>
+                        <button class="filter-tab" data-filter="today" onclick="filterGeoData('today')">Today</button>
+                        <button class="filter-tab" data-filter="week" onclick="filterGeoData('week')">This Week</button>
+                        <button class="filter-tab" data-filter="month" onclick="filterGeoData('month')">This Month</button>
+                    </div>
+                    <div class="filter-actions">
+                        <div class="search-box" style="margin-right: 12px;">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Search by location, IP..." id="geoSearchInput" style="width: 250px;">
+                        </div>
+                        <select class="filter-select" id="geoSortSelect" onchange="sortGeoData(this.value)">
+                            <option value="recent">Most Recent</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="location">By Location</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Detailed Clicks Table -->
+                <div class="analytics-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-table"></i> Click Details</h3>
+                        <span class="badge" id="geoTableCount">0 clicks</span>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <div class="table-container">
+                            <table class="data-table" id="geoClicksTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th><i class="fas fa-clock"></i> Timestamp</th>
+                                        <th><i class="fas fa-map-marker-alt"></i> Location</th>
+                                        <th><i class="fas fa-city"></i> City</th>
+                                        <th><i class="fas fa-flag"></i> Country</th>
+                                        <th><i class="fas fa-network-wired"></i> IP Address</th>
+                                        <th><i class="fas fa-mobile-alt"></i> Device</th>
+                                        <th><i class="fas fa-browser"></i> Browser</th>
+                                        <th><i class="fas fa-share-alt"></i> Referrer</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="geoClicksTableBody">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
