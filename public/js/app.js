@@ -2162,6 +2162,11 @@ async function loadDetailedGeographicData() {
         // Apply default filter and render
         filterGeoData('all');
         
+        // Update globe if in globe view
+        if (currentGeoView === 'globe' && typeof updateGlobeData === 'function') {
+            updateGlobeData();
+        }
+        
     } catch (error) {
         console.error('Error loading geographic data:', error);
         showToast('Failed to load geographic data', 'error');
