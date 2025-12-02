@@ -109,24 +109,24 @@ async function initializeGlobe() {
     globeInstance = Globe()
         (container)
         .globeMaterial(new THREE.MeshPhongMaterial({
-            color: 'rgb(228, 228, 231)',
+            color: '#e5e5e5',
             transparent: false,
             opacity: 1
         }))
         .backgroundColor('rgba(0,0,0,0)')
         .showAtmosphere(true)
-        .atmosphereColor('rgba(170, 170, 200, 0.8)')
+        .atmosphereColor('rgba(100, 200, 255, 0.3)')
         .atmosphereAltitude(0.15)
         .hexPolygonsData(countriesData.features)
         .hexPolygonResolution(3)
-        .hexPolygonMargin(0.62)
+        .hexPolygonMargin(0.3)
         .hexPolygonUseDots(false)
-        .hexPolygonColor(() => `rgba(16, 185, 129, ${Math.random() * 0.4 + 0.6})`)
+        .hexPolygonColor(() => `rgba(16, 185, 129, ${Math.random() * 0.2 + 0.7})`)
         .hexPolygonAltitude(0.001)
         .pointsData([])
         .pointAltitude(0.01)
-        .pointColor(() => '#fbbf24')
-        .pointRadius(d => d.size || 0.6)
+        .pointColor(() => '#eab308')
+        .pointRadius(0.5)
         .pointsMerge(true)
         .pointLabel(d => `
             <div style="background: white; padding: 12px 16px; border-radius: 10px; color: #1a1a1a; font-family: 'Inter', sans-serif; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border: 1px solid #e5e7eb;">
@@ -204,8 +204,9 @@ async function updateGlobeData() {
     // Update globe with points
     globeInstance
         .pointsData(pointsData)
-        .pointRadius(d => Math.max(0.3, Math.min(d.clicks * 0.15, 1.2)))
-        .pointAltitude(0.005);
+        .pointRadius(0.5)
+        .pointAltitude(0.01)
+        .pointColor(() => '#eab308');
     
     // Update locations list
     updateGlobeLocationsList(pointsData);
