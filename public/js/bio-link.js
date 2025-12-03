@@ -9,7 +9,33 @@ let bioLinkItems = [];
 // Initialize Bio Link functionality
 function initBioLink() {
     console.log('Initializing Bio Link module');
-    loadBioLinks();
+    
+    // Check if user is authenticated
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
+        loadBioLinks();
+    } else {
+        // Wait for auth to complete
+        setTimeout(() => {
+            if (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
+                loadBioLinks();
+            } else {
+                console.log('User not authenticated for bio links');
+                const container = document.getElementById('bioLinksContainer');
+                const emptyState = document.getElementById('bioLinksEmptyState');
+                if (container) container.style.display = 'none';
+                if (emptyState) {
+                    emptyState.style.display = 'flex';
+                    emptyState.innerHTML = `
+                        <div class="empty-state-icon">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <h3>Please log in</h3>
+                        <p>You need to be logged in to create bio links</p>
+                    `;
+                }
+            }
+        }, 1000);
+    }
 }
 
 // Load all bio links for the current user
@@ -249,6 +275,17 @@ function removeBioLinkItem(index) {
 // Save bio link
 async function saveBioLink() {
     try {
+        // Check if Firebase is ready
+        if (typeof firebase === 'undefined' || !firebase.firestore) {
+            showToast('Firebase not ready. Please try again.', 'error');
+            return;
+        }
+
+        if (!currentUser || !currentUser.uid) {
+            showToast('You must be logged in to save bio links', 'error');
+            return;
+        }
+
         const name = document.getElementById('bioLinkName').value.trim();
         const slug = document.getElementById('bioLinkSlug').value.trim();
         const description = document.getElementById('bioLinkDescription').value.trim();
@@ -265,8 +302,9 @@ async function saveBioLink() {
         }
 
         // Check if slug is available (only if creating new or slug changed)
+        const db = firebase.firestore();
+        
         if (!currentBioLink || currentBioLink.slug !== slug) {
-            const db = firebase.firestore();
             const existingSlug = await db.collection('bioLinks')
                 .where('slug', '==', slug)
                 .get();
@@ -302,8 +340,6 @@ async function saveBioLink() {
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        const db = firebase.firestore();
-
         if (currentBioLink) {
             // Update existing
             await db.collection('bioLinks').doc(currentBioLink.id).update(bioLinkData);
@@ -320,7 +356,7 @@ async function saveBioLink() {
 
     } catch (error) {
         console.error('Error saving bio link:', error);
-        showToast('Failed to save bio link', 'error');
+        showToast('Failed to save bio link: ' + error.message, 'error');
     }
 }
 
