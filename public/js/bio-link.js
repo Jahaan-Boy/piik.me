@@ -87,6 +87,16 @@ async function loadBioLinks() {
 
         renderBioLinks();
         updateBioLinkStats();
+        
+        // Update create button visibility
+        const createBtn = document.getElementById('createBioLinkBtn');
+        if (createBtn) {
+            if (bioLinks.length > 0) {
+                createBtn.style.display = 'none';
+            } else {
+                createBtn.style.display = 'flex';
+            }
+        }
 
     } catch (error) {
         console.error('Error loading bio links:', error);
@@ -370,6 +380,17 @@ async function saveBioLink() {
             await db.collection('bioLinks').doc(currentBioLink.id).update(bioLinkData);
             showToast('Bio link updated successfully!', 'success');
         } else {
+            // Check if user already has a bio link
+            const userBioLinks = await db.collection('bioLinks')
+                .where('userId', '==', currentUser.uid)
+                .get();
+            
+            if (!userBioLinks.empty) {
+                showToast('You can only create one bio link. Please edit your existing one.', 'error');
+                closeBioLinkModal();
+                return;
+            }
+            
             // Create new
             bioLinkData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
             await db.collection('bioLinks').add(bioLinkData);
