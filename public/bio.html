@@ -45,171 +45,324 @@
             align-items: center;
             justify-content: center;
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #0a0a0f;
             position: relative;
-            overflow-x: hidden;
+            overflow: hidden;
+            perspective: 1500px;
+        }
+
+        /* Animated Mesh Gradient Background */
+        .mesh-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .mesh-gradient::before,
+        .mesh-gradient::after {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.5;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .mesh-gradient::before {
+            background: radial-gradient(circle, #667eea, transparent);
+            top: -250px;
+            left: -250px;
+            animation-delay: 0s;
+        }
+
+        .mesh-gradient::after {
+            background: radial-gradient(circle, #764ba2, transparent);
+            bottom: -250px;
+            right: -250px;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(100px, 100px) scale(1.1); }
+            50% { transform: translate(-50px, 200px) scale(0.9); }
+            75% { transform: translate(-150px, 50px) scale(1.05); }
+        }
+
+        /* Animated particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: particleFloat 15s linear infinite;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% {
+                transform: translateY(-100px) translateX(100px);
+                opacity: 0;
+            }
         }
 
         .background-blur {
             position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-size: cover;
             background-position: center;
-            filter: blur(60px) brightness(0.8);
-            transform: scale(1.2);
+            filter: blur(100px) brightness(0.3);
             z-index: -1;
             opacity: 0;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.8s ease;
         }
 
         .background-blur.active {
             opacity: 1;
         }
 
-        body.solid {
-            background: #1a1a2e;
-        }
-
-        body.dots {
-            background: #1a1a2e;
-            background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-
         .bio-slug {
             position: fixed;
-            top: 20px;
-            left: 20px;
+            top: 24px;
+            left: 24px;
             z-index: 1000;
-            font-size: 14px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.9);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+            text-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+            letter-spacing: 0.5px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .bio-card-logo {
             position: absolute;
-            top: 16px;
-            left: 16px;
-            width: 28px;
-            height: 28px;
+            top: 20px;
+            left: 20px;
+            width: 32px;
+            height: 32px;
+            filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.3));
+            z-index: 10;
         }
 
+        /* 3D Parallax Tilt Container */
         .bio-container {
             max-width: 680px;
             width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            padding: 48px 32px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 32px;
+            padding: 56px 40px;
             position: relative;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: fadeIn 0.6s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            box-shadow: 
+                0 8px 32px 0 rgba(0, 0, 0, 0.37),
+                inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+                0 0 80px rgba(102, 126, 234, 0.15);
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out, box-shadow 0.3s ease;
+        }
+
+        .bio-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, 
+                rgba(102, 126, 234, 0.3) 0%, 
+                rgba(118, 75, 162, 0.3) 100%);
+            border-radius: 32px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .bio-container:hover::before {
+            opacity: 1;
         }
 
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(30px) scale(0.95);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
 
         .bio-header {
             text-align: center;
-            margin-bottom: 32px;
+            margin-bottom: 40px;
+            position: relative;
         }
 
         .bio-avatar {
-            width: 120px;
-            height: 120px;
+            width: 130px;
+            height: 130px;
             border-radius: 50%;
             object-fit: cover;
-            margin: 0 auto 20px;
-            border: 4px solid #fff;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            margin: 0 auto 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 60px rgba(102, 126, 234, 0.2);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .bio-avatar:hover {
+            transform: scale(1.05) translateY(-5px);
         }
 
         .bio-avatar-placeholder {
-            width: 120px;
-            height: 120px;
+            width: 130px;
+            height: 130px;
             border-radius: 50%;
-            margin: 0 auto 20px;
-            border: 4px solid #fff;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            margin: 0 auto 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 60px rgba(102, 126, 234, 0.2);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 48px;
+            font-size: 52px;
             color: white;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8));
         }
 
         .bio-name {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: 700;
-            color: #1a1a2e;
+            color: rgba(255, 255, 255, 0.95);
             margin-bottom: 12px;
+            text-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
+            letter-spacing: -0.5px;
         }
 
         .bio-description {
-            font-size: 16px;
-            color: #6b7280;
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
             line-height: 1.6;
-            margin-bottom: 24px;
+            max-width: 480px;
+            margin: 0 auto;
         }
 
+        /* Social Links - Holographic Style */
         .bio-social {
             display: flex;
             justify-content: center;
-            gap: 16px;
-            margin-bottom: 32px;
+            gap: 12px;
+            margin-bottom: 36px;
         }
 
         .social-link {
-            width: 44px;
-            height: 44px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            background: rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #4b5563;
             font-size: 18px;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             text-decoration: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .social-link::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+        }
+
+        .social-link:hover::before {
+            left: 100%;
         }
 
         .social-link:hover {
-            background: rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-            color: #1a1a2e;
+            transform: translateY(-4px) scale(1.1);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(102, 126, 234, 0.4);
+            border-color: rgba(102, 126, 234, 0.5);
         }
 
+        /* Bento Grid Layout for Links */
         .bio-links {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 16px;
+            margin-bottom: 0;
+        }
+
+        .bio-links .bio-link-item:first-child {
+            grid-column: 1 / -1;
         }
 
         .bio-link-item {
-            background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 18px 24px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 20px 28px;
             text-align: center;
             text-decoration: none;
-            color: #1a1a2e;
+            color: rgba(255, 255, 255, 0.95);
             font-weight: 600;
-            font-size: 16px;
-            transition: all 0.3s ease;
+            font-size: 15px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             overflow: hidden;
+            cursor: pointer;
+            min-height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .bio-link-item::before {
@@ -219,30 +372,61 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s ease;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.15), 
+                transparent);
+            transition: left 0.6s ease;
         }
 
-        .bio-link-item:hover {
-            border-color: currentColor;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        .bio-link-item::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            padding: 2px;
+            background: linear-gradient(135deg, 
+                rgba(102, 126, 234, 0.4), 
+                rgba(118, 75, 162, 0.4));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, 
+                          linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
         }
 
         .bio-link-item:hover::before {
             left: 100%;
         }
 
+        .bio-link-item:hover::after {
+            opacity: 1;
+        }
+
+        .bio-link-item:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.4),
+                0 0 40px rgba(102, 126, 234, 0.3),
+                inset 0 0 20px rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .bio-link-item:active {
+            transform: translateY(-2px) scale(0.98);
+        }
+
         .bio-footer {
             text-align: center;
             margin-top: 48px;
             padding-top: 24px;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .powered-by {
-            color: #9ca3af;
-            font-size: 14px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 13px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -250,53 +434,60 @@
         }
 
         .powered-by a {
-            color: #6366f1;
+            color: rgba(102, 126, 234, 0.9);
             text-decoration: none;
             font-weight: 600;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .powered-by a:hover {
-            color: #4f46e5;
+            color: rgba(102, 126, 234, 1);
+            filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.5));
         }
 
         .error-container {
             text-align: center;
-            padding: 48px 24px;
+            padding: 64px 32px;
         }
 
         .error-icon {
-            font-size: 64px;
-            color: #ef4444;
+            font-size: 72px;
+            color: rgba(239, 68, 68, 0.8);
             margin-bottom: 24px;
+            filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.3));
         }
 
         .error-title {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
-            color: #1a1a2e;
-            margin-bottom: 12px;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 16px;
         }
 
         .error-message {
             font-size: 16px;
-            color: #6b7280;
-            margin-bottom: 24px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 32px;
+            line-height: 1.6;
         }
 
         .error-button {
             display: inline-block;
-            padding: 12px 24px;
-            background: #6366f1;
-            color: white;
-            border-radius: 8px;
+            padding: 14px 32px;
+            background: rgba(99, 102, 241, 0.2);
+            backdrop-filter: blur(10px);
+            color: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            border-radius: 12px;
             text-decoration: none;
             font-weight: 600;
-            transition: background 0.3s ease;
+            transition: all 0.3s ease;
         }
 
         .error-button:hover {
-            background: #4f46e5;
+            background: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
         }
 
         .loading {
@@ -305,7 +496,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: #000;
+            background: #0a0a0f;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -316,28 +507,43 @@
             width: 80px;
             height: 80px;
             animation: spin 2s linear infinite;
+            filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.5));
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 768px) {
             .bio-container {
-                padding: 32px 24px;
+                padding: 40px 28px;
             }
 
             .bio-name {
-                font-size: 24px;
+                font-size: 26px;
             }
 
             .bio-description {
                 font-size: 14px;
             }
+
+            .bio-links {
+                grid-template-columns: 1fr;
+            }
+
+            .bio-links .bio-link-item:first-child {
+                grid-column: 1;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Mesh Gradient Background -->
+    <div class="mesh-gradient"></div>
+    
+    <!-- Animated Particles -->
+    <div class="particles" id="particles"></div>
+    
     <span class="bio-slug" id="bioSlugDisplay"></span>
     <div class="background-blur" id="backgroundBlur"></div>
     <div class="loading" id="loading">
@@ -487,8 +693,8 @@
             if (socialLinks.length > 0) {
                 html += '<div class="bio-social">';
                 socialLinks.forEach(link => {
-                    html += `<a href="${link.url}" class="social-link" target="_blank" rel="noopener noreferrer" style="color: ${themeColor};">
-                        <i class="${link.icon}"></i>
+                    html += `<a href="${link.url}" class="social-link" target="_blank" rel="noopener noreferrer">
+                        <i class="${link.icon}" style="color: rgba(255, 255, 255, 0.8);"></i>
                     </a>`;
                 });
                 html += '</div>';
@@ -500,8 +706,7 @@
             if (bioLink.links && bioLink.links.length > 0) {
                 html += '<div class="bio-links">';
                 bioLink.links.forEach((link, index) => {
-                    html += `<a href="${link.url}" class="bio-link-item" target="_blank" rel="noopener noreferrer" 
-                             style="border-color: ${themeColor}; color: ${themeColor};"
+                    html += `<a href="${link.url}" class="bio-link-item" target="_blank" rel="noopener noreferrer"
                              onclick="trackClick('${bioLink.slug}', ${index})">
                         ${link.title}
                     </a>`;
@@ -525,6 +730,11 @@
             bioContent.innerHTML = html;
             document.getElementById('loading').style.display = 'none';
             bioContent.style.display = 'block';
+            
+            // Initialize magnetic interactions after content is loaded
+            setTimeout(() => {
+                initMagneticLinks();
+            }, 100);
         }
 
         async function trackClick(slug, linkIndex) {
@@ -562,6 +772,71 @@
 
         // Load bio link on page load
         loadBioLink();
+
+        // Create particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // 3D Parallax Tilt Effect
+        function init3DTilt() {
+            const card = document.querySelector('.bio-container');
+            if (!card) return;
+
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = (y - centerY) / 20;
+                const rotateY = (centerX - x) / 20;
+                
+                card.style.transform = `perspective(1500px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1500px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+            });
+        }
+
+        // Magnetic interaction for links
+        function initMagneticLinks() {
+            const links = document.querySelectorAll('.bio-link-item, .social-link');
+            
+            links.forEach(link => {
+                link.addEventListener('mousemove', (e) => {
+                    const rect = link.getBoundingClientRect();
+                    const x = e.clientX - rect.left - rect.width / 2;
+                    const y = e.clientY - rect.top - rect.height / 2;
+                    
+                    link.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px) translateY(-6px) scale(1.02)`;
+                });
+                
+                link.addEventListener('mouseleave', () => {
+                    link.style.transform = '';
+                });
+            });
+        }
+
+        // Initialize effects after content loads
+        setTimeout(() => {
+            createParticles();
+            init3DTilt();
+            initMagneticLinks();
+        }, 100);
     </script>
 </body>
 </html>
