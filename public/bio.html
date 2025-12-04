@@ -321,6 +321,22 @@
             margin-bottom: 10px;
             text-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
             letter-spacing: -0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            background: linear-gradient(135deg, #1d9bf0, #0c7abf);
+            border-radius: 50%;
+            color: white;
+            font-size: 13px;
+            box-shadow: 0 0 20px rgba(29, 155, 240, 0.5);
         }
 
         .bio-description {
@@ -328,7 +344,7 @@
             color: rgba(255, 255, 255, 0.7);
             line-height: 1.6;
             max-width: 480px;
-            margin: 0 auto;
+            margin: 0 auto 24px auto;
         }
 
         /* Social Links - Holographic Style */
@@ -764,8 +780,9 @@
                 </div>`;
             }
 
-            // Name and description
-            html += `<h1 class="bio-name">${bioLink.name}</h1>`;
+            // Name and description with verified badge
+            const verifiedBadge = bioLink.verified ? '<span class="verified-badge"><i class="fas fa-check"></i></span>' : '';
+            html += `<h1 class="bio-name">${bioLink.name}${verifiedBadge}</h1>`;
             if (bioLink.description) {
                 html += `<p class="bio-description">${bioLink.description}</p>`;
             }

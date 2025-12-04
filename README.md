@@ -51,6 +51,7 @@ Link360 is a comprehensive link management and analytics platform that empowers 
 - **Click-Through Rate (CTR)** - Automatic calculation and display of conversion metrics
 - **Share Tracking** - Monitor social sharing and link distribution
 - **Click History** - Chronological log of all link interactions with timestamps
+- **Bio Links** - Create personalized bio pages with social links and verified badges for early adopters
 
 ### Technical Features
 
