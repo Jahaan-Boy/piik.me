@@ -547,6 +547,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Find the upload button
+            const uploadBtn = e.target.parentElement.querySelector('button.btn-secondary');
+            if (!uploadBtn) {
+                console.error('Upload button not found');
+                showToast('Upload button not found', 'error');
+                return;
+            }
+
             try {
                 // Check if user is authenticated
                 const user = firebase.auth().currentUser;
@@ -556,27 +564,58 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                // Find the upload button
-                const uploadBtn = e.target.parentElement.querySelector('button.btn-secondary');
-                if (!uploadBtn) {
-                    console.error('Upload button not found');
-                    throw new Error('Upload button not found');
-                }
-
                 // Show loading state
                 const originalText = uploadBtn.innerHTML;
                 uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
                 uploadBtn.disabled = true;
 
-                // Upload to Firebase Storage
-                const storage = firebase.storage();
-                const storageRef = storage.ref();
-                const fileExtension = file.name.split('.').pop();
-                const fileName = `bio-profiles/${user.uid}/${Date.now()}.${fileExtension}`;
-                const fileRef = storageRef.child(fileName);
+                console.log('Starting upload for:', file.name, 'Size:', file.size, 'bytes');
 
-                await fileRef.put(file);
-                const downloadURL = await fileRef.getDownloadURL();
+                // Create upload promise with timeout
+                const uploadPromise = new Promise(async (resolve, reject) => {
+                    try {
+                        // Upload to Firebase Storage
+                        const storage = firebase.storage();
+                        const storageRef = storage.ref();
+                        const fileExtension = file.name.split('.').pop();
+                        const fileName = `bio-profiles/${user.uid}/${Date.now()}.${fileExtension}`;
+                        const fileRef = storageRef.child(fileName);
+
+                        console.log('Uploading to path:', fileName);
+
+                        // Upload file
+                        const uploadTask = fileRef.put(file);
+
+                        // Monitor upload progress
+                        uploadTask.on('state_changed',
+                            (snapshot) => {
+                                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                                console.log('Upload progress:', progress.toFixed(0) + '%');
+                            },
+                            (error) => {
+                                console.error('Upload error:', error);
+                                reject(error);
+                            },
+                            async () => {
+                                // Upload completed successfully
+                                console.log('Upload completed, getting download URL...');
+                                const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                                console.log('Download URL:', downloadURL);
+                                resolve(downloadURL);
+                            }
+                        );
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+
+                // Set timeout for upload (30 seconds)
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Upload timeout - please check your connection')), 30000);
+                });
+
+                // Race between upload and timeout
+                const downloadURL = await Promise.race([uploadPromise, timeoutPromise]);
 
                 // Update hidden input with URL
                 document.getElementById('bioProfilePicture').value = downloadURL;
@@ -592,13 +631,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error('Error uploading profile picture:', error);
-                showToast(`Failed to upload: ${error.message || 'Unknown error'}`, 'error');
+                
+                let errorMessage = 'Failed to upload';
+                if (error.code === 'storage/unauthorized') {
+                    errorMessage = 'Permission denied - please contact support';
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                
+                showToast(errorMessage, 'error');
                 
                 // Reset file input
                 e.target.value = '';
                 
                 // Reset button
-                const uploadBtn = e.target.parentElement.querySelector('button.btn-secondary');
                 if (uploadBtn) {
                     uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Picture';
                     uploadBtn.disabled = false;
