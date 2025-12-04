@@ -313,6 +313,7 @@ async function saveBioLink() {
             },
             views: currentBioLink?.views || 0,
             clicks: currentBioLink?.clicks || 0,
+            verified: currentBioLink?.verified || false,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 

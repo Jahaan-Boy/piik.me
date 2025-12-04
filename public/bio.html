@@ -321,8 +321,9 @@
             margin-bottom: 10px;
             text-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
             letter-spacing: -0.5px;
-            display: inline-flex;
+            display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
         }
 
@@ -337,6 +338,20 @@
             color: white;
             font-size: 13px;
             box-shadow: 0 0 20px rgba(29, 155, 240, 0.5);
+        }
+
+        .under-review-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
         }
 
         .bio-description {
@@ -781,7 +796,9 @@
             }
 
             // Name and description with verified badge
-            const verifiedBadge = bioLink.verified ? '<span class="verified-badge"><i class="fas fa-check"></i></span>' : '';
+            const verifiedBadge = bioLink.verified 
+                ? '<span class="verified-badge"><i class="fas fa-check"></i></span>' 
+                : '<span class="under-review-badge">Under Review</span>';
             html += `<h1 class="bio-name">${bioLink.name}${verifiedBadge}</h1>`;
             if (bioLink.description) {
                 html += `<p class="bio-description">${bioLink.description}</p>`;
