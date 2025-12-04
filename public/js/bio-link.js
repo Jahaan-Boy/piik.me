@@ -177,6 +177,8 @@ function openBioLinkModal(bioLinkId = null) {
     document.getElementById('bioLinkSlug').value = '';
     document.getElementById('bioLinkDescription').value = '';
     document.getElementById('bioProfilePicture').value = '';
+    document.getElementById('bioProfilePictureFile').value = '';
+    document.getElementById('bioProfilePicturePreview').style.display = 'none';
     document.getElementById('bioThemeColor').value = '#06b6d4';
     document.getElementById('bioThemeColorHex').value = '#06b6d4';
     document.getElementById('bioBackgroundStyle').value = 'gradient';
@@ -199,6 +201,12 @@ function openBioLinkModal(bioLinkId = null) {
             document.getElementById('bioLinkSlug').value = currentBioLink.slug || '';
             document.getElementById('bioLinkDescription').value = currentBioLink.description || '';
             document.getElementById('bioProfilePicture').value = currentBioLink.profilePicture || '';
+            
+            // Show existing profile picture preview
+            if (currentBioLink.profilePicture) {
+                showBioProfilePicturePreview(currentBioLink.profilePicture, 'Existing photo');
+            }
+            
             document.getElementById('bioThemeColor').value = currentBioLink.themeColor || '#06b6d4';
             document.getElementById('bioThemeColorHex').value = currentBioLink.themeColor || '#06b6d4';
             document.getElementById('bioBackgroundStyle').value = currentBioLink.backgroundStyle || 'gradient';
@@ -512,3 +520,87 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ================================
+// PROFILE PICTURE UPLOAD
+// ================================
+
+// Handle profile picture file selection
+document.addEventListener('DOMContentLoaded', () => {
+    const bioProfilePictureFile = document.getElementById('bioProfilePictureFile');
+    if (bioProfilePictureFile) {
+        bioProfilePictureFile.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showToast('Please select a valid image file', 'error');
+                return;
+            }
+
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Image size must be less than 5MB', 'error');
+                return;
+            }
+
+            try {
+                // Show loading state
+                const uploadBtn = e.target.previousElementSibling;
+                const originalText = uploadBtn.innerHTML;
+                uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+                uploadBtn.disabled = true;
+
+                // Upload to Firebase Storage
+                const storage = firebase.storage();
+                const storageRef = storage.ref();
+                const fileExtension = file.name.split('.').pop();
+                const fileName = `bio-profiles/${currentUser.uid}/${Date.now()}.${fileExtension}`;
+                const fileRef = storageRef.child(fileName);
+
+                await fileRef.put(file);
+                const downloadURL = await fileRef.getDownloadURL();
+
+                // Update hidden input with URL
+                document.getElementById('bioProfilePicture').value = downloadURL;
+
+                // Show preview
+                showBioProfilePicturePreview(downloadURL, file.name);
+
+                // Reset button
+                uploadBtn.innerHTML = originalText;
+                uploadBtn.disabled = false;
+
+                showToast('Profile picture uploaded successfully!', 'success');
+
+            } catch (error) {
+                console.error('Error uploading profile picture:', error);
+                showToast('Failed to upload profile picture', 'error');
+                
+                // Reset button
+                const uploadBtn = e.target.previousElementSibling;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Upload Picture';
+                uploadBtn.disabled = false;
+            }
+        });
+    }
+});
+
+// Show profile picture preview
+function showBioProfilePicturePreview(url, fileName) {
+    const preview = document.getElementById('bioProfilePicturePreview');
+    const previewImg = document.getElementById('bioProfilePicturePreviewImg');
+    const fileNameSpan = document.getElementById('bioProfilePictureFileName');
+
+    previewImg.src = url;
+    fileNameSpan.textContent = fileName;
+    preview.style.display = 'flex';
+}
+
+// Remove profile picture
+function removeBioProfilePicture() {
+    document.getElementById('bioProfilePicture').value = '';
+    document.getElementById('bioProfilePictureFile').value = '';
+    document.getElementById('bioProfilePicturePreview').style.display = 'none';
+}

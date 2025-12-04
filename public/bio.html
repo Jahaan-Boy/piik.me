@@ -29,6 +29,7 @@
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     
     <style>
         * {
@@ -45,6 +46,27 @@
             justify-content: center;
             padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .background-blur {
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(60px) brightness(0.8);
+            transform: scale(1.2);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .background-blur.active {
+            opacity: 1;
         }
 
         body.solid {
@@ -292,6 +314,7 @@
     </style>
 </head>
 <body>
+    <div class="background-blur" id="backgroundBlur"></div>
     <div class="bio-container">
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -374,7 +397,15 @@
 
                 // Set background style
                 document.body.className = bioLink.backgroundStyle || 'gradient';
-                if (bioLink.backgroundStyle === 'gradient' && bioLink.themeColor) {
+                
+                // Apply blurred profile picture background if available
+                if (bioLink.profilePicture) {
+                    const backgroundBlur = document.getElementById('backgroundBlur');
+                    backgroundBlur.style.backgroundImage = `url(${bioLink.profilePicture})`;
+                    setTimeout(() => {
+                        backgroundBlur.classList.add('active');
+                    }, 100);
+                } else if (bioLink.backgroundStyle === 'gradient' && bioLink.themeColor) {
                     const rgb = hexToRgb(bioLink.themeColor);
                     document.body.style.background = `linear-gradient(135deg, ${bioLink.themeColor} 0%, rgb(${rgb.r * 0.7}, ${rgb.g * 0.7}, ${rgb.b * 0.7}) 100%)`;
                 }
