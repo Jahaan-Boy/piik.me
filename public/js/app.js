@@ -294,17 +294,17 @@ function initializeEventListeners() {
     });
     
     // User dropdown
-    if (userMenuBtn) {
+    if (userMenuBtn && userDropdown) {
         userMenuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             userDropdown.classList.toggle('show');
         });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', () => {
+            userDropdown.classList.remove('show');
+        });
     }
-    
-    // Close dropdown when clicking outside
-    document.addEventListener('click', () => {
-        userDropdown.classList.remove('show');
-    });
     
     // Create link modal
     if (createLinkBtn) {
@@ -381,16 +381,16 @@ function initializeEventListeners() {
     }
     
     // Global Search
-    if (searchInput) {
+    if (searchInput && searchSuggestions) {
         searchInput.addEventListener('input', handleGlobalSearch);
         searchInput.addEventListener('focus', () => {
-            if (searchInput.value.trim()) {
+            if (searchInput.value.trim() && searchSuggestions) {
                 searchSuggestions.style.display = 'block';
             }
         });
     }
     
-    if (searchClear) {
+    if (searchClear && searchInput && searchSuggestions) {
         searchClear.addEventListener('click', () => {
             searchInput.value = '';
             searchClear.style.display = 'none';
@@ -399,11 +399,13 @@ function initializeEventListeners() {
     }
     
     // Close search suggestions when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.search-container')) {
-            searchSuggestions.style.display = 'none';
-        }
-    });
+    if (searchSuggestions) {
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                searchSuggestions.style.display = 'none';
+            }
+        });
+    }
     
     // Bug Report Modal
     if (reportBugBtn) {
@@ -736,13 +738,6 @@ async function setUsername() {
     } finally {
         setUsernameBtn.disabled = false;
         setUsernameBtn.innerHTML = '<i class="fas fa-check"></i> Set Username';
-    }
-        }).catch((error) => {
-            console.error('Redirect error:', error);
-            showToast('Error signing in: ' + error.message, 'error');
-        });
-    } else {
-        showLandingPage();
     }
 }
 
