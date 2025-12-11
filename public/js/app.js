@@ -1048,10 +1048,11 @@ async function handleCreateLink() {
         if (data.success) {
             showToast('Link created successfully!', 'success');
             closeCreateLinkModal();
-            // Add small delay to ensure Firestore has saved the data
+            // Add delay to ensure Firestore has saved the data and reload immediately + after delay
+            loadLinks(); // Load immediately to show any cached data
             setTimeout(() => {
-                loadLinks();
-            }, 500);
+                loadLinks(); // Load again after delay to get fresh data
+            }, 1000);
         } else {
             showToast(data.error || 'Failed to create link', 'error');
         }
@@ -1097,9 +1098,26 @@ async function loadLinks() {
         console.log('Links fetched from API:', data);
         
         userLinks = data.links || [];
+        console.log('Total links loaded:', userLinks.length);
+        console.log('Active links:', userLinks.filter(l => l.isActive !== false).length);
+        console.log('Link details:', userLinks.map(l => ({ shortCode: l.shortCode, isActive: l.isActive })));
         
         if (userLinks.length > 0) {
-            displayLinks(userLinks);
+            // Check which filter tab is active
+            let currentFilter = 'all';
+            const activeTab = document.querySelector('.filter-tab.active');
+            if (activeTab) {
+                currentFilter = activeTab.dataset.filter;
+            }
+            
+            // Apply the current filter
+            if (currentFilter === 'all') {
+                displayLinks(userLinks);
+            } else {
+                filterLinks(currentFilter);
+                return; // filterLinks handles display
+            }
+            
             updateStats(userLinks);
             emptyState.style.display = 'none';
             linksContainer.style.display = 'grid';
