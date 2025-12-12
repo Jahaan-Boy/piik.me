@@ -55,6 +55,7 @@ img {
     
     /* Spacing */
     --sidebar-width: 240px;
+    --sidebar-collapsed-width: 80px;
     --topbar-height: 64px;
 }
 
@@ -214,7 +215,38 @@ html[data-theme="light"] .app-orb {
     left: 0;
     top: 0;
     z-index: 100;
-    transition: transform var(--transition-normal);
+    transition: width var(--transition-normal), transform var(--transition-normal);
+}
+
+.sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+.sidebar.collapsed .logo-image {
+    height: 32px;
+}
+
+.sidebar.collapsed .nav-item span,
+.sidebar.collapsed .user-info,
+.sidebar.collapsed .logo-text-wrapper {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    transition: opacity var(--transition-fast);
+}
+
+.sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 12px;
+}
+
+.sidebar.collapsed .sidebar-user {
+    justify-content: center;
+    padding: 12px;
+}
+
+.sidebar.collapsed .sidebar-header {
+    justify-content: center;
 }
 
 .sidebar-header {
@@ -273,7 +305,9 @@ html[data-theme="light"] .app-orb {
 }
 
 .sidebar-toggle {
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: none;
     border: none;
     color: var(--text-secondary);
@@ -416,6 +450,10 @@ html[data-theme="light"] .app-orb {
     position: relative;
     max-width: 100%;
     overflow-x: hidden;
+}
+
+.sidebar.collapsed ~ .main-content {
+    margin-left: var(--sidebar-collapsed-width);
 }
 
 /* App Background Orbs */

@@ -242,6 +242,23 @@ function initializeEventListeners() {
         });
     }
     
+    // Sidebar toggle for collapse/expand
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('collapsed');
+            // Save state to localStorage
+            localStorage.setItem('piikme-sidebar-collapsed', sidebar.classList.contains('collapsed'));
+        });
+        
+        // Restore collapsed state from localStorage
+        const isCollapsed = localStorage.getItem('piikme-sidebar-collapsed') === 'true';
+        if (isCollapsed) {
+            sidebar.classList.add('collapsed');
+        }
+    }
+    
     // Mobile menu toggle
     if (mobileMenuBtn) {
         mobileMenuBtn.addEventListener('click', (e) => {
