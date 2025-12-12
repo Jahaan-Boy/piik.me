@@ -126,7 +126,7 @@ html[data-theme="light"] {
 
 body {
     font-family: var(--font-sans);
-    background: linear-gradient(180deg, #0B1120 0%, #050A14 50%, #0B1120 100%);
+    background: #000000;
     background-attachment: fixed;
     color: var(--text-primary);
     display: flex;
@@ -205,7 +205,7 @@ html[data-theme="light"] .app-orb {
 .sidebar {
     width: var(--sidebar-width);
     height: 100vh;
-    background: rgba(11, 17, 32, 0.7);
+    background: #000000;
     backdrop-filter: blur(20px);
     border-right: 1px solid rgba(139, 157, 184, 0.1);
     display: flex;
@@ -471,7 +471,7 @@ html[data-theme="light"] .app-orb {
 
 .topbar {
     height: var(--topbar-height);
-    background: rgba(11, 17, 32, 0.7);
+    background: #000000;
     backdrop-filter: blur(20px);
     border-bottom: 1px solid rgba(139, 157, 184, 0.1);
     display: flex;
